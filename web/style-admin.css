@@ -1,0 +1,108 @@
+body {
+	background-color: #ffffff;
+	color: #000000;
+	font-family: arial,sans-serif,helvetica; 
+	margin:0; 
+	padding:0;
+	margin-top: 10px;
+}
+
+div.main {
+	width: 85%;
+	margin: auto;
+}
+
+div.title {
+	/* margin-bottom: 0px; */
+}
+
+.logo {
+	font-size: 4.5em;
+	font-weight: bold;
+}
+
+	.logo a {
+		text-decoration:none;
+	}
+
+.logo1 {
+	color: #33cc00;
+	letter-spacing: -4px;
+}
+.logo2 {
+	color: #009900;
+	letter-spacing: -4px;
+}
+
+.logodot {/* 
+	THIS CODE PUT THE DOT RIGHT ON THE I IN NGUMBI
+	margin-top: -75px;
+	margin-left: 244px;
+	height: 75px;*/
+}
+
+.logo3 {
+	color: #009900;
+	font-size: 50%;
+	font-weight: normal;
+	letter-spacing: -2px;
+}
+
+.row1 {
+	/*margin-top: -.4em;*/
+	color: #33cc00;
+	/*text-align: left;*/
+	font-weight: bold;
+	/*margin-bottom: .5em;*/
+}
+
+div.row2 {
+	text-align: left;
+	margin-bottom: .5em;
+	
+}
+	div.row2 a {
+		color: #009900;
+		font-weight: bold;
+	}
+
+	div.row2 table {
+		text-align: left;
+	}
+
+div.bigtable {
+}
+	div.bigtable th {
+		font-size: .8em;
+	}
+	div.bigtable td {
+		font-size: .6em;
+	}
+	
+div.vartable {
+	margin-bottom: 40px;
+}
+	div.vartable th {
+		padding: 1px 4px;
+	}
+	div.vartable td {
+		padding: 3px 20px;
+	}
+	
+div.edittable {
+}
+	div.edittable th {
+		padding: 1px 4px;
+	}
+	div.edittable td {
+		padding: 5px 3px;
+	}
+
+div.details {
+	margin-top: 80px;
+	font-size: .7em;
+}
+
+.bold {
+	font-weight: bold;
+}
