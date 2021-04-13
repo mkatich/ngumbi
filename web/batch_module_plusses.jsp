@@ -26,7 +26,7 @@ String state = request.getParameter("state");
 
 if (state == null){
     //first time here
-
+    
     %>
     <h1>Batch Module for Converting Plusses back to Spaces</h1>
     <h3>First time here!</h3>
@@ -35,7 +35,7 @@ if (state == null){
         <input type="hidden" name="state" value="1">
         <input type=submit name="start_button" value="Start Batch Process">
     </form>
-
+    
     <%
 
 }
