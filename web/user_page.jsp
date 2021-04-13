@@ -76,7 +76,7 @@ BODY { 	background-color: <%=bgColor%>;
 //Connection and Operations on database
 String dbname = "ngumbi";
 String dbuser = "ngumbi_db_user";
-String dbpass = "ngumbi_db_pass";
+String dbpass = "m8w1b174cpx9w0j3l";
 Driver driver = null;
 String dbURL = "jdbc:mysql://localhost:3306/"+dbname+"?user=";
 Connection conn = null;
