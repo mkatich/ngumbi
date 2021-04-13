@@ -38,7 +38,7 @@
                             <h1>Frequently Asked Questions</h1>
                             If your questions aren't answered here, please send an email using the &quot;contact the admin&quot; link at the bottom.
                             <!-- For now, please visit <a href="asdfasdfa">the forum</a> to look for answers or ask questions. -->
-
+                            
                             <ul class="col_middle_right">
                                 <li><a href="#remoteuse">How do I use my homepage from any computer or smartphone with internet?</a>
                                 <li><a href="#whatisngumbi">What the heck is ngumbi?</a>
