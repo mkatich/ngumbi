@@ -1,180 +1,126 @@
 body {
-	background-color: #ffffff;
-	color: #000000;
-	font-family: arial,sans-serif,helvetica; 
-	/*margin:0; */
-	/*padding:0;*/
-	margin-top: 10px;
+    background-color: #ffffff;
+    color: #000000;
+    font-family: arial,sans-serif,helvetica; 
+    margin-top: 10px;
 }
 
 img {
-	border-style: none;
+    border-style: none;
 }
 
 div.main {
-	width: 95%;
-	margin: auto;
+    width: 95%;
+    margin: auto;
 }
 
 div.title {
-	/* margin-bottom: 0px; */
 }
 
 .logo {
-	font-size: 4.5em;
-	font-weight: bold;
+    font-size: 4.5em;
+    font-weight: bold;
 }
 
-	.logo a {
-		text-decoration:none;
-	}
+.logo a {
+    text-decoration:none;
+}
 
 .logo1 {
-	color: #33cc00;
-	letter-spacing: -4px;
+    color: #33cc00;
+    letter-spacing: -4px;
 }
 .logo2 {
-	color: #009900;
-	letter-spacing: -4px;
+    color: #009900;
+    letter-spacing: -4px;
 }
 
 .logo3 {
-	color: #009900;
-	font-size: 50%;
-	font-weight: normal;
-	letter-spacing: -2px;
+    color: #009900;
+    font-size: 50%;
+    font-weight: normal;
+    letter-spacing: -2px;
 }
 
 div.under_title {
-	text-align: center;
-	margin-top: 1em;
-	height: 3.7em; 
-	/* 3.7 is the sweetspot for IE6 and Firefox, smallest value so that ("under_title")the two smaller lines on index.jsp
-	and the bigger one line for section title for the other pages don't cause the menu to move in IE and
-	don't cause the main text to move in Firefox. Opera always has a little twitch no matter what */
+    text-align: center;
+    margin-top: 1em;
+    height: 3.7em; 
 }
-	div.under_title a {
-		color: #ff6600;
-		font-weight: bold;	
-		font-style: italic;
-	} 
-	div.under_title h1 {
-		color: #33cc00;
-		font-size: 2em;
-		font-weight: normal;
-	}
+div.under_title a {
+    color: #ff6600;
+    font-weight: bold;	
+    font-style: italic;
+} 
+div.under_title h1 {
+    color: #33cc00;
+    font-size: 2em;
+    font-weight: normal;
+}
 
 div.columns {
-	/*margin-top: 0px;*/
 }
 
 div.col_left {
-	/*margin-top: 20px;*/ 
-	margin-top: -25px;
-	width: 140px;
-	float: left;
-        padding-right: 20px;
+    margin-top: -25px;
+    width: 140px;
+    float: left;
+    padding-right: 20px;
 }
 
 div.col_middle_right {
-	/*text-align: justify;*/
-	/*margin-top: 20px;*/
-	/*text-align: left;*/ 
-	/*display:inline; */
-	/*float: left;*/
-	
-	/*margin-left: 151px;*/
-	/*margin-right:131px;*/
+    /*text-align: justify;*/
 }
-	div.col_middle_right a {
-            color: #ff6600;
-	}
-	div.col_middle_right h1 {
-            color: #ff6600;
-            font-size: 1.5em;
-            font-weight: bold;
-	}
-        div.col_middle_right h3 {
-            color: #ff6600;
-	}
+div.col_middle_right a {
+    color: #ff6600;
+}
+div.col_middle_right h1 {
+    color: #ff6600;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+div.col_middle_right h3 {
+    color: #ff6600;
+}
 
-/*
-div.col_right {
-	width: 130px;
-	float: right;
-	text-align: right;
-}
-*/
-
-/*
-div.load_box {
-	background-color: #ffffcc;
-	width: 125px;
-	height: 75px;
-	text-align: center;
-}
-	div.load_box2 {		
-		display: table-cell; vertical-align: middle; position: static;}
-	}
-	div.load_box3 {
-	}
-*/
-/*
-div.load_box {
-	background-color: #ffffcc;
-	height: 75px;
-	text-align: center;
-	overflow: hidden;
-	position: relative;
-}
-	div.load_box2 {		
-		display: table-cell; vertical-align: middle; position: static;}
-	}
-	div.load_box3 {
-	}
-*/
 
 #loadbox_outer {
-	overflow: hidden; 
-	position: relative;
-	height: 75px;
-	width: 125px;
-	background-color: #ffffcc;
+    overflow: hidden; 
+    position: relative;
+    height: 75px;
+    width: 125px;
+    background-color: #ffffcc;
 }
 #loadbox_outer[id] {
-	display: table; 
-	position: static;
+    display: table; 
+    position: static;
 }
-#loadbox_middle {  /* for explorer only*/
-	position: absolute; 
-	top: 50%;
+#loadbox_middle {
+    position: absolute; 
+    top: 50%;
 }
 #loadbox_middle[id] {
-	display: table-cell; 
-	vertical-align: middle; 
-	position: static;
+    display: table-cell; 
+    vertical-align: middle; 
+    position: static;
 }
-#loadbox_inner {  /* for explorer only */
-	position: relative; top: -50%
+#loadbox_inner {
+    text-align: center;
+    padding: 10px;
 }
 
-
-
-/*
-.vert_middle {
-	vertical-align:middle;
-}*/
 
 div.bottom_footer {
-	clear: both;
-	text-align: center;
-	font-size: 7pt;
-	margin-top: 30px;
-	margin-bottom: 20px;
+    color: #aaaaaa;
+    clear: both;
+    text-align: center;
+    font-size: 8pt;
+    margin-top: 30px;
+    margin-bottom: 20px;
 }
-	div.bottom_footer a {
-		color: #bbbbbb;
-	}
+div.bottom_footer a {
+    color: #aaaaaa;
+}
 
 
 ul.left_menu {
@@ -182,61 +128,61 @@ ul.left_menu {
     font-size: 1.2em;
     font-weight: bold;
 }
-        ul.left_menu li {
-            margin-left: -1.5em;
-            margin-top: 5px;
-        }
-        ul.left_menu a {
-            color: #009900;
-        }
-        /*
-        ul.left_menu a:link {
-                color: #221b00;
-        }*/
-        ul.left_menu a:visited {
-            color: #33cc00;
-        }
-        /*
-        ul.left_menu a:hover {
-                color: #000088;
-        }*/
-        ul.left_menu a:active {
-            color: #005500;
-        }
+ul.left_menu li {
+    margin-left: -1.5em;
+    margin-top: 5px;
+}
+ul.left_menu a {
+    color: #009900;
+}
+/*
+ul.left_menu a:link {
+        color: #221b00;
+}*/
+ul.left_menu a:visited {
+    color: #33cc00;
+}
+/*
+ul.left_menu a:hover {
+        color: #000088;
+}*/
+ul.left_menu a:active {
+    color: #005500;
+}
 ul.col_middle_right {
     font-size: .8em;
     font-weight: bold;
 }
-    ul.col_middle_right a {
-        color: #22bb00;
-    }
+ul.col_middle_right a {
+    color: #22bb00;
+}
 
 
-		
+
 a.bold_orange_link {
-	color: #ff6600;
-	font-weight: bold;
+    color: #ff6600;
+    font-weight: bold;
 }
 
 a.small_green_link:link	{
-	color: #22bb00;
-	font-size: .7em;	
+    color: #22bb00;
+    font-size: .7em;	
 }
 a.small_green_link:visited {
-	color: #22bb00;
-	font-size: .7em;	
+    color: #22bb00;
+    font-size: .7em;	
 }
 
 table.optionsnew {
-	border-style: solid; 
-	border-width: 1px 1px 1px 1px;
-	border-spacing: 1px;
-	border-color: #aaaaaa;
-	border-collapse: collapse; 
+    border-style: solid; 
+    border-width: 1px 1px 1px 1px;
+    border-spacing: 1px;
+    border-color: #aaaaaa;
+    border-collapse: collapse; 
 }
-	table.optionsnew td {
-		border-width: 1px 1px 1px 1px;
-		padding: 4px 4px 4px 4px;
-		border-style: solid dotted;
-		border-color: #999999 #dddddd;
-	}
+table.optionsnew td {
+    border-width: 1px 1px 1px 1px;
+    padding: 4px 4px 4px 4px;
+    border-style: solid dotted;
+    border-color: #999999 #dddddd;
+}
