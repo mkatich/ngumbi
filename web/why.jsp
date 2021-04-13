@@ -45,11 +45,10 @@
 				
 				<p>
                                     You may notice that this site is a bit simple looking, and that's
-                                    the point.  <b>It's easy to find what you want and it loads fast.</b> That
+                                    the point.  <b>It's easy to find what you want and it loads super quickly.</b> That
                                     is what Ngumbi is all about.  I initially created this site with power
-                                    users in mind, but anyone can benefit by its ease of use!  Even smartphone
-                                    and mobile device users benefit by putting their Ngumbi page in their
-                                    favorites, replacing thumb typing a URL with a few clicks.
+                                    users in mind, but anyone can benefit by its ease of use! 
+                                    It's great on a smartphone as well. 
                                     Ngumbi is for those who want simplicity, convenience, mobility, and a
                                     little bit more control.
                                 </p>
@@ -57,19 +56,19 @@
 				<p>
                                     Why is it better than saving your links in bookmarks/favorites?
                                     Well the obvious answer
-                                    is that you can <b>access this from any computer or phone</b> and with bookmarks you can't.
+                                    is that you can <b>access this easily from any computer or phone</b> and with bookmarks you can't.
                                     Also, if you're like me, you don't like to use the browser's bookmarks for
-                                    going to sites you use everyday.  I use it as more of a repository for
+                                    going to sites you use every day. I use it as more of a repository for
                                     places I want to save and will go back to when I need to, but not often.
                                     Plus I have a lot of links in there and it's gotten a little messy.
                                 </p>
 					
 				<p>
                                     I don't argue that Ngumbi is better in
-                                    all respects than every other homepage service, but it does certainly have advantages
+                                    all respects than every other homepage out there, but it does certainly have advantages
                                     that appeal to people.  Some of my friends used just google.com for their homepage
-                                    and even "about:blank", no homepage at all, so it would load fast.  It's
-                                    this <b>minimalist attitude</b> that Ngumbi takes advantage of and expands upon.
+                                    and even "about:blank", no homepage at all, so it would load fast. 
+                                    Ngumbi takes this <b>minimalist attitude</b> and runs with it.
                                     Google alone makes for a good homepage, but what if you could have a few links
                                     of your own to go with it?
                                 </p>
@@ -80,7 +79,7 @@
                                     for editing your page and lots of widgets for things like weather and news.
                                     They look nice and are cool at first but then you notice how annoying they are.  They are a bit
                                     slow, sometimes have annoying ads, and often just look like a jumbled mess.
-                                    If you want a lot of fancy stuff on your homepage, Ngumbi probably isn't for you.
+                                    If you really want a lot of fancy stuff on your homepage, Ngumbi isn't for you.
                                 </p>
 
                                 <img style="float: right; padding: 0px 8px;" src="images/dumb_weather.png" title="Wow, I already knew that by looking outside" alt="weather picture">
@@ -88,7 +87,7 @@
                                     Another problem with others is that you may see tomorrow's weather compressed
                                     into a nice little sun and cloud picture with a couple numbers but what about
                                     radar? or storm warnings? or weather at another location?  You're better off just going to your
-                                    <a href="http://forecast.weather.gov/MapClick.php?CityName=Saint+Louis&state=MO&site=LSX&textField1=38.636&textField2=-90.2443&e=0">
+                                    <a href="https://forecast.weather.gov/MapClick.php?textField1=38.81&textField2=-89.96#.XdL31eh">
                                     favorite weather website for your location</a> where you can see the entire week's
                                     forecast, full current conditions, and radar images and animations.  The others
                                     don't help you at all with that.  If you
