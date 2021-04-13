@@ -13,19 +13,14 @@
 <div id="loadbox_outer">
     <div id="loadbox_middle">
         <div id="loadbox_inner">
-
+            
+            
             <form name="jump" method="post" action="user/" enctype="application/x-www-form-urlencoded">
-                <table border=0 width=125>
-                    <tr>
-                        <td align=center valign=middle>
-                            <input name="user" size="12" maxlength="30" style="margin-bottom: 4px;">
-                            <input type="submit" value="get my page">
-                        </td>
-                    </tr>
-                </table>
+                <input name="user" size="12" maxlength="30" style="margin-bottom: 4px;">
+                <input type="submit" value="get my page">
             </form>
+            
             <!--set focus in javascript-->
-
             <script type="text/javascript"><!--
             document.jump.user.focus();
             //--></script>
