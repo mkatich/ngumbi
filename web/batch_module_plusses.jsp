@@ -46,7 +46,7 @@ else if (state.equals("1")){
 
     String dbname = "ngumbi";
     String dbuser = "ngumbi_db_user";
-    String pass = "ngumbi_db_pass";
+    String pass = "m8w1b174cpx9w0j3l";
     Driver driver = null;
     String dbURL = "jdbc:mysql://localhost:3306/"+dbname+"?user=";
     Connection conn = null;
