@@ -115,7 +115,7 @@ if (rsuserdata.next()){
 	//		**ADMIN UPDATE**	
 	//update the last viewed value in users table
 	//checks reporting turned on, then adds entry to history table for this view, while deleting oldest entry
-	helperMethods.adminUpdate(user, "view");
+	//helperMethods.adminUpdate(user, "view");
 	
 	int linkCounter;
 	int catCounter;
