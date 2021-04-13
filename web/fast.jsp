@@ -43,7 +43,7 @@
                                 very quick web server as well.
                             </p>
                             <p>
-                                I ran a speed test recently and got the following result:
+                                I ran a speed test and got the following result:
                             </p>
                             <img src="images/speed_test.PNG" width="719" height="165" alt="speed test">
 
