@@ -43,14 +43,32 @@ public class helperMethods {
         PreparedStatement psUpdateHistory = null;
         
         //get current count of entries in history table
-        String getCurrHistorySize = "SELECT COUNT(*) AS c FROM history";
-        PreparedStatement psGetCurrHistorySize = null;
-        ResultSet rsGetCurrHistorySize = null;
-        int currHistorySize = 0;
+        //String getCurrHistorySize = "SELECT COUNT(*) AS c FROM history";
+        //PreparedStatement psGetCurrHistorySize = null;
+        //ResultSet rsGetCurrHistorySize = null;
+        //int currHistorySize = 0;
         
         //delete oldest history entries to maintain max size
-        String deleteOldestHistoryEntries = "DELETE FROM history ORDER BY event_time ASC LIMIT ? ";//? will be number of rows to delete to reduce history to max size (should just be 1 every time)
-        PreparedStatement psDeleteOldestHistoryEntries = null;
+        //String deleteOldestHistoryEntries = "DELETE FROM history ORDER BY event_time ASC LIMIT ? ";//? will be number of rows to delete to reduce history to max size (should just be 1 every time)
+        //PreparedStatement psDeleteOldestHistoryEntries = null;
+        
+        //delete oldest history entries to maintain max size
+        //this version does not require another query to check the current size
+        //and actually is a lot faster this way because that SELECT COUNT(*) is
+        //quite slow for some reason
+        String deleteOldestHistoryEntries2 = ""
+                + "DELETE FROM history "
+                + "WHERE event_time NOT IN ( "
+                + "        SELECT event_time "
+                + "        FROM ( "
+                + "            SELECT event_time "
+                + "            FROM history "
+                + "            ORDER BY event_time DESC "
+                + "            LIMIT ? "
+                + "        ) temp1 "
+                + "    ) ";
+        PreparedStatement psDeleteOldestHistoryEntries2 = null;
+        
         
         
         Connection conn = null;
@@ -117,22 +135,28 @@ public class helperMethods {
                     psUpdateHistory.executeUpdate();
                     
                     //get current count of entries in history table
-                    psGetCurrHistorySize = conn.prepareStatement(getCurrHistorySize);
-                    rsGetCurrHistorySize = psGetCurrHistorySize.executeQuery();
-                    if (rsGetCurrHistorySize.next()){
-                        currHistorySize = rsGetCurrHistorySize.getInt("c");
-                    }
+                    //psGetCurrHistorySize = conn.prepareStatement(getCurrHistorySize);
+                    //rsGetCurrHistorySize = psGetCurrHistorySize.executeQuery();
+                    //if (rsGetCurrHistorySize.next()){
+                    //    currHistorySize = rsGetCurrHistorySize.getInt("c");
+                    //}
                     
                     //calc number to delete from history
-                    int numHistoryEntriesToDelete = currHistorySize - maxHistorySize;
-                    if (numHistoryEntriesToDelete < 0)
-                        numHistoryEntriesToDelete = 0;
+                    //int numHistoryEntriesToDelete = currHistorySize - maxHistorySize;
+                    //if (numHistoryEntriesToDelete < 0)
+                    //    numHistoryEntriesToDelete = 0;
 
                     //delete enough history entries to reduce the history to 
                     //the max size, deleting oldest entries first
-                    psDeleteOldestHistoryEntries = conn.prepareStatement(deleteOldestHistoryEntries);
-                    psDeleteOldestHistoryEntries.setInt(1, numHistoryEntriesToDelete);
-                    psDeleteOldestHistoryEntries.executeUpdate();
+                    //psDeleteOldestHistoryEntries = conn.prepareStatement(deleteOldestHistoryEntries);
+                    //psDeleteOldestHistoryEntries.setInt(1, numHistoryEntriesToDelete);
+                    //psDeleteOldestHistoryEntries.executeUpdate();
+
+                    //delete enough history entries to reduce the history to 
+                    //the max size, deleting oldest entries first
+                    psDeleteOldestHistoryEntries2 = conn.prepareStatement(deleteOldestHistoryEntries2);
+                    psDeleteOldestHistoryEntries2.setInt(1, maxHistorySize);
+                    psDeleteOldestHistoryEntries2.executeUpdate();
 
                 }
 
@@ -146,8 +170,7 @@ public class helperMethods {
                         "getHistoryConfig", getHistoryConfig, 
                         "getUserId", getUserId, 
                         "updateHistory", updateHistory, 
-                        "getCurrHistorySize", getCurrHistorySize, 
-                        "deleteOldestHistoryEntries", deleteOldestHistoryEntries 
+                        "deleteOldestHistoryEntries2", deleteOldestHistoryEntries2 
                     }
             );
         }
@@ -164,10 +187,12 @@ public class helperMethods {
             
             DbConnectionPool.closeStatement(psUpdateHistory);
             
-            DbConnectionPool.closeResultSet(rsGetCurrHistorySize);
-            DbConnectionPool.closeStatement(psGetCurrHistorySize);
+            //DbConnectionPool.closeResultSet(rsGetCurrHistorySize);
+            //DbConnectionPool.closeStatement(psGetCurrHistorySize);
             
-            DbConnectionPool.closeStatement(psDeleteOldestHistoryEntries);
+            //DbConnectionPool.closeStatement(psDeleteOldestHistoryEntries);
+            
+            DbConnectionPool.closeStatement(psDeleteOldestHistoryEntries2);
             
             DbConnectionPool.closeConnection(conn);
         }
