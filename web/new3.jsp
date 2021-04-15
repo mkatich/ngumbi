@@ -145,7 +145,7 @@ else {
 
     //-- Connection and Operations on database --
     
-    String lockTables = "LOCK TABLES users WRITE, admin WRITE";
+    String lockTables = "LOCK TABLES users WRITE, admin READ";
     PreparedStatement psLockTables = null;
     String unlockTables = "UNLOCK TABLES";
     PreparedStatement psUnlockTables = null;
@@ -196,7 +196,7 @@ else {
         + "INSERT INTO user_links "
         + "(user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) "
         + "(    "
-        + "    SELECT "+user_id_just_inserted+" AS user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank "
+        + "    SELECT ? AS user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank "
         + "    FROM user_links WHERE user_id = ? "
         + ") ";
 //+ "     FROM user_links WHERE user_id = "+loadDataFromUserId+")";
@@ -262,6 +262,12 @@ else {
                     user_id_just_inserted = rsUserIdJustInserted.getInt("lastUserId");
                 }
                 
+                
+                //unlock tables here since we're done with the stuff we need 
+                //locking for, and so we don't have to lock the user_links table
+                psUnlockTables = conn.prepareStatement(unlockTables);
+                psUnlockTables.executeUpdate();
+                
                 //check if user chose to fill in data instead of just start from scratch
                 //validate loaddataname with the DB to make sure that user actually exists
                 psFillUserId = conn.prepareStatement(getFillUserId);
@@ -274,7 +280,8 @@ else {
                     
                     //execute filling of chosen user's links into new user
                     psFillLinks = conn.prepareStatement(fillLinks);
-                    psFillLinks.setInt(1, loadDataFromUserId);
+                    psFillLinks.setInt(1, user_id_just_inserted);
+                    psFillLinks.setInt(2, loadDataFromUserId);
                     psFillLinks.executeUpdate();
                 }
                 
@@ -286,6 +293,7 @@ else {
     catch (SQLException e) {
         DbConnectionPool.outputException(e, "new3.jsp", 
             new String[]{
+                "lockTables", lockTables, 
                 "userQuery", userQuery, 
                 "adminCheck", adminCheck, 
                 "numUsersCheck", numUsersCheck, 
@@ -312,7 +320,8 @@ else {
 
         DbConnectionPool.closeStatement(psFillUserId);
         
-        //unlock tables in finally so they are unlocked even if has exception
+        //unlock tables in finally, even if already have unlock in the try{},
+        //so they are unlocked even if has exception
         if (conn != null){
             psUnlockTables = conn.prepareStatement(unlockTables);
             psUnlockTables.executeUpdate();
