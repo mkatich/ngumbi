@@ -4,13 +4,7 @@
     Author     : Michael
 --%>
 
-<%
-/*********************************************************************
-*	File: new2.jsp
-*	Description: User came from new1.jsp, creating new account and
-*       page.
-*********************************************************************/
-%>
+<%@page import="DbConnectionPool.DbConnectionPool"%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page language="java" import="java.sql.*" %>
 <jsp:useBean id="helperMethods" scope="page" class="helperMethodsBean.helperMethods" />
@@ -145,195 +139,253 @@ else {
     if (searchLang == null)
         searchLang = "";
 
-
+    
+        
+    boolean okToInsertNewUser = false;
 
     //-- Connection and Operations on database --
-    String dbname = "ngumbi";
-    String dbuser = "ngumbi_db_user";
-    String dbpass = "m8w1b174cpx9w0j3l";
-    Driver driver = null;
-    String dbURL = "jdbc:mysql://localhost:3306/"+dbname+"?user=";
-    Connection conn = null;
-
-    Statement stat1 = null;
-    Statement stat6 = null;
-    Statement stat7 = null;
-    String userQuery = "SELECT username FROM users WHERE username = '"+user+"'";
+    
+    String lockTables = "LOCK TABLES users WRITE, admin WRITE";
+    PreparedStatement psLockTables = null;
+    String unlockTables = "UNLOCK TABLES";
+    PreparedStatement psUnlockTables = null;
+    
+    //check if any matching users already exist
+    String userQuery = "SELECT username FROM users WHERE username = ? ";
     ResultSet rsMatchingUsers = null;
+    PreparedStatement psMatchingUsers = null;
+    boolean userAlreadyExists = false;
+    
+    //check some relevant admin variables currently set
     String adminCheck = "SELECT allowNewUsers, maxUsers FROM admin";
     ResultSet rsAdminCheck = null;
+    PreparedStatement psAdminCheck = null;
+    int allowNewUsers = -1;
+    int maxUsers = -1;
+    
+    //check number of existing users currently
     String numUsersCheck = "SELECT COUNT(*) AS numUsers FROM users";
     ResultSet rsNumUsers = null;
-
-    //execute SQL operations
+    PreparedStatement psNumUsers = null;
+    int numUsers = -1;
+    
+    //insert statement to insert new user!
+    String userInsert = ""
+        + "INSERT INTO users "
+        + "(username, pass, searchOption, searchUrl, searchLang, createdDate) "
+        + "VALUES "
+        + "(?, ?, ?, ?, ?, NOW())";
+    //    + "('"+user+"', '"+pass+"', "+searchOption+", '"+searchUrl+"', '"+searchLang+"', NOW())";
+    PreparedStatement psUserInsert = null;
+    boolean userInserted = false;
+    
+    //get user_id of user just inserted
+    String getUserIdJustInserted = "SELECT MAX(user_id) AS lastUserId FROM users";
+    ResultSet rsUserIdJustInserted = null;
+    PreparedStatement psUserIdJustInserted = null;
+    int user_id_just_inserted = 0;
+    
+    //get the user_id of selected existing user if the new user chose to fill links from existing user into theirs
+    String getFillUserId = "SELECT user_id FROM users WHERE username = ? ";
+    //String getFillUserId = "SELECT user_id FROM users WHERE username = '"+loadDataName+"'";
+    ResultSet rsFillUserId = null;
+    PreparedStatement psFillUserId = null;
+    
+    //prepare insert for inserting another user's links into the new user in case that was chosen
+    String fillLinks = ""
+        + "INSERT INTO user_links "
+        + "(user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) "
+        + "(    "
+        + "    SELECT "+user_id_just_inserted+" AS user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank "
+        + "    FROM user_links WHERE user_id = ? "
+        + ") ";
+//+ "     FROM user_links WHERE user_id = "+loadDataFromUserId+")";
+    PreparedStatement psFillLinks = null;
+                    
+    
+    
+    
+    Connection conn = null;
     try {
-        driver = (Driver) Class.forName("com.mysql.jdbc.Driver").newInstance();
-        conn = DriverManager.getConnection(dbURL, dbuser, dbpass);
-        stat1 = conn.createStatement();
-        rsMatchingUsers = stat1.executeQuery(userQuery);//gets matching user(s) already in table
-        stat6 = conn.createStatement();
-        rsAdminCheck = stat6.executeQuery(adminCheck);//gets max users allowed and if new users are allowed from admin table
-        stat7 = conn.createStatement();
-        rsNumUsers = stat7.executeQuery(numUsersCheck);//get # of existing users from users table
+        conn = DbConnectionPool.getConnection();//fetch a connection
+        if (conn != null){
+            //perform queries/updates
+            
+            //lock tables
+            psLockTables = conn.prepareStatement(lockTables);
+            psLockTables.executeUpdate();
+            
+            
+            //check if any matching users already exist
+            psMatchingUsers = conn.prepareStatement(userQuery);
+            psMatchingUsers.setString(1, user);
+            rsMatchingUsers = psMatchingUsers.executeQuery();
+            if (rsMatchingUsers.next()){
+                userAlreadyExists = true;
+            }
+            
+            //check some relevant admin variables currently set
+            psAdminCheck = conn.prepareStatement(adminCheck);
+            rsAdminCheck = psAdminCheck.executeQuery();
+            if (rsAdminCheck.next()){
+                allowNewUsers = rsAdminCheck.getInt("allowNewUsers");
+                maxUsers = rsAdminCheck.getInt("maxUsers");
+            }
+            
+            //check number of existing users currently
+            psNumUsers = conn.prepareStatement(numUsersCheck);
+            rsNumUsers = psNumUsers.executeQuery();
+            if (rsNumUsers.next()){
+                numUsers = rsNumUsers.getInt("numUsers");
+            }
+            
+            
+            //now check if inputs and admin variables allow us to 
+            //insert a new user
+            if (!userAlreadyExists && allowNewUsers == 1 && numUsers < maxUsers){
+                okToInsertNewUser = true;
+                
+                //do new user insert!
+                psUserInsert = conn.prepareStatement(userInsert);
+                psUserInsert.setString(1, user);
+                psUserInsert.setString(2, pass);
+                psUserInsert.setString(3, searchOption);
+                psUserInsert.setString(4, searchUrl);
+                psUserInsert.setString(5, searchLang);
+                psUserInsert.executeUpdate();
+                userInserted = true;
+            
+                //get user_id of user just inserted (auto-incremented)
+                psUserIdJustInserted = conn.prepareStatement(getUserIdJustInserted);
+                rsUserIdJustInserted = psUserIdJustInserted.executeQuery();
+                if (rsUserIdJustInserted.next()){
+                    user_id_just_inserted = rsUserIdJustInserted.getInt("lastUserId");
+                }
+                
+                //check if user chose to fill in data instead of just start from scratch
+                //validate loaddataname with the DB to make sure that user actually exists
+                psFillUserId = conn.prepareStatement(getFillUserId);
+                psFillUserId.setString(1, loadDataName);
+                rsFillUserId = psFillUserId.executeQuery();
+                if (rsFillUserId.next()){
+                    //yes, the loadDataName matches an already existing user, so 
+                    //new user chose to fill with that
+                    int loadDataFromUserId = rsFillUserId.getInt("user_id");
+                    
+                    //execute filling of chosen user's links into new user
+                    psFillLinks = conn.prepareStatement(fillLinks);
+                    psFillLinks.setInt(1, loadDataFromUserId);
+                    psFillLinks.executeUpdate();
+                }
+                
+            }
+            
+            
+        }
     }
-    catch (Exception e) {
-        out.print("Unable to make connection to production database");
-        out.print(e);
+    catch (SQLException e) {
+        DbConnectionPool.outputException(e, "new3.jsp", 
+            new String[]{
+                "userQuery", userQuery, 
+                "adminCheck", adminCheck, 
+                "numUsersCheck", numUsersCheck, 
+                "userInsert", userInsert, 
+                "getUserIdJustInserted", getUserIdJustInserted, 
+                "getFillUserId", getFillUserId, 
+                "fillLinks", fillLinks}
+            );
     }
+    finally {
+        DbConnectionPool.closeStatement(psLockTables);
+        
+        DbConnectionPool.closeResultSet(rsMatchingUsers);
+        DbConnectionPool.closeStatement(psMatchingUsers);
+        DbConnectionPool.closeResultSet(rsAdminCheck);
+        DbConnectionPool.closeStatement(psAdminCheck);
+        DbConnectionPool.closeResultSet(rsNumUsers);
+        DbConnectionPool.closeStatement(psNumUsers);
+        
+        DbConnectionPool.closeStatement(psUserInsert);
+        
+        DbConnectionPool.closeResultSet(rsUserIdJustInserted);
+        DbConnectionPool.closeStatement(psUserIdJustInserted);
 
-    //get results of queries
-    int allowNewUsers = 0;
-    int maxUsers = 0;
-    int numUsers = 0;
-    boolean userAlreadyExists = false;
-
-    if (rsAdminCheck.next()){
-        allowNewUsers = rsAdminCheck.getInt("allowNewUsers");
-        maxUsers = rsAdminCheck.getInt("maxUsers");
+        DbConnectionPool.closeStatement(psFillUserId);
+        
+        //unlock tables in finally so they are unlocked even if has exception
+        if (conn != null){
+            psUnlockTables = conn.prepareStatement(unlockTables);
+            psUnlockTables.executeUpdate();
+        }
+        
+        DbConnectionPool.closeConnection(conn);
     }
-    rsAdminCheck.close();
-    if (rsNumUsers.next())
-        numUsers = rsNumUsers.getInt("numUsers");
-    rsNumUsers.close();
-    if (rsMatchingUsers.next())
-        userAlreadyExists = true;
-    rsMatchingUsers.close();
-
+    
 
     //do checks
-    if (allowNewUsers == 0){
-        //no new users allowed
-        %>
-        <body>
-            <div class="main">
-                <jsp:include page="inc_ngumbi_title_unlinked.jsp" />
-                <p>User not created.  Sorry, but there is a new users freeze in effect.  Please try again later.</p>
-                <p><a href="index.jsp">Back to main page</a></p>
-            </div>
-        </body>
-        <%
-    }
-    else if (numUsers >= maxUsers){
-        //we are at max users, no more new users allowed
-        %>
-        <body>
-            <div class="main">
-                <jsp:include page="inc_ngumbi_title_unlinked.jsp" />
-                <p>
-                    User not created.  Sorry but there is a new users freeze in effect in order to ensure our
-                    current users have the best service.
-                </p>
-                <p><a href="index.jsp">Back to main page</a></p>
-            </div>
-        </body>
-        <%
-    }
-    else if (userAlreadyExists){
-        //username already in use
-        %>
-        <body>
-            <div class="main">
-                <jsp:include page="inc_ngumbi_title_unlinked.jsp" />
-                <p>
-                    User not created.  The username <span style="color: red;"><%=user%></span>
-                    is already in use.
-                </p>
-                <p><a href="new2.jsp?loadDataName=<%=loadDataName%>">Try again</a></p>
-            </div>
-        </body>
-        <%
-    }
+    if (!userInserted){
+        //we didn't insert the new user. check reasons why and display based on that.
+        
 
-
-
+        if (allowNewUsers == 0){
+            //no new users allowed
+            %>
+            <body>
+                <div class="main">
+                    <jsp:include page="inc_ngumbi_title_unlinked.jsp" />
+                    <p>User not created. Sorry, but there is a new users freeze in effect.  Please try again later.</p>
+                    <p><a href="index.jsp">Back to main page</a></p>
+                </div>
+            </body>
+            <%
+        }
+        else if (numUsers >= maxUsers && numUsers != -1 && maxUsers != -1){
+            //we are at max users, no more new users allowed
+            %>
+            <body>
+                <div class="main">
+                    <jsp:include page="inc_ngumbi_title_unlinked.jsp" />
+                    <p>
+                        User not created. Sorry but there is a new users freeze in effect in order to ensure our
+                        current users have the best service.
+                    </p>
+                    <p><a href="index.jsp">Back to main page</a></p>
+                </div>
+            </body>
+            <%
+        }
+        else if (userAlreadyExists){
+            //username already in use
+            %>
+            <body>
+                <div class="main">
+                    <jsp:include page="inc_ngumbi_title_unlinked.jsp" />
+                    <p>
+                        User not created. The username <span style="color: red;"><%=user%></span>
+                        is already in use.
+                    </p>
+                    <p><a href="new2.jsp?loadDataName=<%=loadDataName%>">Try again</a></p>
+                </div>
+            </body>
+            <%
+        }        
+        
+    }
     else {
-        //everything good, add them to users table and fill in data if applicable
-
-        //put their data into users table
-        Statement stat2 = null;
-        Statement stat4 = null;
-        Statement stat22 = null;
-        Statement stat44 = null;
-        Statement stat55 = null;
-        String lockTables = "LOCK TABLES users WRITE";
-        String userInsert = "INSERT INTO users (username, pass, searchOption, searchUrl, searchLang, createdDate) VALUES ('"+user+"', '"+pass+"', "+searchOption+", '"+searchUrl+"', '"+searchLang+"', NOW())";
-        String getUserIdJustInserted = "SELECT MAX(user_id) AS lastUserId FROM users";
-        String fillCheck = "SELECT user_id FROM users WHERE username = '"+loadDataName+"'";
-        String unlockTables = "UNLOCK TABLES";
-        ResultSet rsfillcheck = null;
-        ResultSet rsLastId = null;
-
-        int user_id_just_inserted = 0;
-
-        //execute SQL operations
-        try {
-            //lock tables
-            stat22 = conn.createStatement();
-            stat22.execute(lockTables);
-
-            //add them to users table
-            stat2 = conn.createStatement();
-            stat2.executeUpdate(userInsert);
-
-            //get user_id of user just inserted
-            stat44 = conn.createStatement();
-            rsLastId = stat44.executeQuery(getUserIdJustInserted);
-            if (rsLastId.next())
-                user_id_just_inserted = rsLastId.getInt("lastUserId");
-            rsLastId.close();
-
-            //get matching user(s) for fill purpose already in table
-            stat4 = conn.createStatement();
-            rsfillcheck = stat4.executeQuery(fillCheck);
-
-            //unlock tables
-            stat55 = conn.createStatement();
-            stat55.execute(unlockTables);
-
-            //check if user chose to fill in data instead of just start from scratch
-            //validate loaddataname with the DB to make sure that user actually exists
-            if (rsfillcheck.next()){
-                int loadDataFromUserId = rsfillcheck.getInt("user_id");
-
-                Statement stat5 = null;
-                String fillLinks = "INSERT INTO user_links (user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) (SELECT "+user_id_just_inserted+" AS user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank FROM user_links WHERE user_id = "+loadDataFromUserId+")";
-                try {
-                    stat5 = conn.createStatement();
-                    stat5.executeUpdate(fillLinks);//fill their table with chosen data
-                }
-                catch (Exception e) {
-                    out.print("Unable to make connection to production database");
-                    out.print(e);
-                }
-            }
-            rsfillcheck.close();
-
-
-            //after database operations above, update history table with the event
-            //this is considered an edit also so it updates lastEdited field in users table
-            //		**ADMIN UPDATE**
-            helperMethods.adminUpdate(user, "new user");
-
-        }
-        catch (Exception e) {
-                out.print("Unable to make connection to production database");
-                out.print(e);
-        }
-        finally {
-            rsLastId.close();
-            rsfillcheck.close();
-            conn.close();
-        }
-
-
-
+        //everything good, we added new user!
+                
+        //after database operations above, update history table with the event
+        //this is considered an edit also so it updates lastEdited field in users table
+        //		**ADMIN UPDATE**
+        helperMethods.adminUpdate(user, "new user");
+        
         //display a new user created message, then link them to their page
         %>
         <body>
             <div class="main">
                 <jsp:include page="inc_ngumbi_title_unlinked.jsp" />
                 <p>
-                    Your username has been created!
+                    Your username <b><%=user%></b> has been created!
 
                     <script type="text/javascript"><!--
 
