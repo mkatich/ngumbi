@@ -9,14 +9,14 @@ public class helperMethods {
     // it records the edit data as a new entry in the history table if recording is turned on
     // and also updates the lastEdited or lastViewed field of the users table for this user
     public void adminUpdate(String username, String updateType) {
-
+        
         //prep update for the users table to set the lastViewed or lastEdited
         //values. We'll check which to use below.
         String updateUsersTableViewed = "UPDATE users SET lastViewed = NOW() WHERE username = ? ";
         PreparedStatement psUpdateUsersTableViewed = null;
         String updateUsersTableEdited = "UPDATE users SET lastEdited = NOW() WHERE username = ? ";
         PreparedStatement psUpdateUsersTableEdited = null;
-
+        
         //history table operations below
         //check if reporting is turned on in the admin table for history, and what kind
         //also check what max size of history table is set as
@@ -26,7 +26,7 @@ public class helperMethods {
         boolean reportEdits = false;
         boolean reportViews = false;
         int maxHistorySize = 0;
-
+        
         //get user_id by the username
         String getUserId = "SELECT user_id FROM users where username = ? ";
         PreparedStatement psGetUserId = null;
