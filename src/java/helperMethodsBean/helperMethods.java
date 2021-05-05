@@ -70,7 +70,6 @@ public class helperMethods {
         PreparedStatement psDeleteOldestHistoryEntries2 = null;
         
         
-        
         Connection conn = null;
         try {
             conn = DbConnectionPool.getConnection();//fetch a connection
