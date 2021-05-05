@@ -14,7 +14,6 @@
     <div id="loadbox_middle">
         <div id="loadbox_inner">
             
-            
             <form name="jump" method="post" action="user/" enctype="application/x-www-form-urlencoded">
                 <input name="user" size="12" maxlength="30" style="margin-bottom: 4px;">
                 <input type="submit" value="get my page">
