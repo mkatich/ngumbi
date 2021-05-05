@@ -38,6 +38,7 @@ String searchLangYahoo = request.getParameter("searchLangYahoo");
 -->
 </style>
 <script type="text/javascript"><!--
+    
 //--></script>
 <jsp:include page="inc_google_analytics.jsp" />
 </head>
@@ -106,7 +107,9 @@ if (!goodLogin){
             <p>
                 <a href="new2.jsp?loadDataName=<%=loadDataName%>">Try again</a>
             </p>
-            <p>or <a href="index.jsp">Cancel</a></p>
+            <p>
+                or <a href="index.jsp">Cancel</a>
+            </p>
         </div>
     </body>
     <%
@@ -437,7 +440,6 @@ else {
 
     } //end - //everything good
 }//end - //the login they entered passed preliminary test
-
 
 
 %>
