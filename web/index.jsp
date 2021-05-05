@@ -35,23 +35,33 @@
                 <div class="col_middle_right">
                     <table>
                         <tr>
-                            <td valign=top>
+                            <td valign="top">
+                                
                                 <h1>What is it?</h1>
+                                
                                 Ngumbi is a useful, convenient, easily customizable, fast, 
                                 simple <b>homepage system</b> that doesn't get in your
                                 way of finding what you want to see on the web, 
                                 and you can access yours from any computer or smartphone!
 
                                 <h1>What does it look like?</h1>
+                                
                                 A homepage with this system is basically a page of your chosen links
                                 organized how you like, with a search on top.  
                                 Maybe you think that's boring, but you'll soon realize how much time you
                                 save using it.  If you're an Internet user that regularly visits some
                                 sites, you'll especially benefit.
-                                <p>To see an Ngumbi page in action, check out the 
-                                    <a href="examples.jsp" class="bold_orange_link">examples</a>.</p>
-                                <p>If you're ready to start your own now, 
-                                    <a href="new1.jsp" class="bold_orange_link">go here</a>.</p>
+                                
+                                <p>
+                                    To see an Ngumbi page in action, check out the 
+                                    <a href="examples.jsp" class="bold_orange_link">examples</a>.
+                                </p>
+                                
+                                <p>
+                                    If you're ready to start your own now, 
+                                    <a href="new1.jsp" class="bold_orange_link">go here</a>.
+                                </p>
+                                
                             </td>
 
                             <!--<td align=right valign=top width=160 height=350 bgcolor="#FFFFFF">
