@@ -2,15 +2,10 @@
     Document   : new2
     Created on : Feb 14, 2011, 12:52:59 AM
     Author     : Michael
+
+    Description: User came from new1.jsp, creating new account and page.
 --%>
 
-<%
-/*********************************************************************
-*	File: new2.jsp
-*	Description: User came from new1.jsp, creating new account and
-*       page.
-*********************************************************************/
-%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%
 //get the passed arguments
@@ -71,12 +66,12 @@ function changeColor(){
                 Spaces are not allowed, use _ instead.
             </p>
             <p>
-                username: <input type=text name="user" size=18 maxlength=30 value="">
+                username: <input type="text" name="user" size="18" maxlength="30" value="">
                 <span style="font-size: .8em;">(your page will be at ngumbi.com/users/&lt;username&gt;)</span>
                 <br>
-                password: <input type=password name="pass" size=18 maxlength=30 value="">
+                password: <input type="password" name="pass" size="18" maxlength="30" value="">
                 <br>
-                confirm password: <input type=password name="cpass" size=18 maxlength=30 value="">
+                confirm password: <input type="password" name="cpass" size="18" maxlength="30" value="">
             </p>
             <p>
                 2. Choose your options for a search at the top of your page:
@@ -85,16 +80,16 @@ function changeColor(){
             <table class="optionsnew">
                 <tr id="rowGoogle">
                     <td>
-                        <input type=radio name="searchOption" id="searchOptRadio1" value="1" checked onClick="changeColor()">
+                        <input type="radio" name="searchOption" id="searchOptRadio1" value="1" checked onClick="changeColor()">
                         <label for="searchOptRadio1">Google search <span style="font-size: .7em">(n)</span></label><br>
 
-                        <input type=radio name="searchOption" id="searchOptRadio2" value="2" onClick="changeColor()">
+                        <input type="radio" name="searchOption" id="searchOptRadio2" value="2" onClick="changeColor()">
                         <label for="searchOptRadio2">Google search</label><br>
 
-                        <input type=radio name="searchOption" id="searchOptRadio3" value="3" onClick="changeColor()">
+                        <input type="radio" name="searchOption" id="searchOptRadio3" value="3" onClick="changeColor()">
                         <label for="searchOptRadio3">Google SafeSearch <span style="font-size: .7em">(n)</span></label><br>
                     </td>
-                    <td valign=top>
+                    <td valign="top">
                         Pick your Google
                         <select name="searchUrlGoogle">
                             <option value="www.google.com" selected>Default - www.google.com</option>
@@ -130,11 +125,11 @@ function changeColor(){
                         </select>
                         <br>
                         or type custom URL
-                        <input type=text name="customSearchUrlGoogle" size=15 maxlength=45 value="">
+                        <input type="text" name="customSearchUrlGoogle" size="15" maxlength="45" value="">
 
                         <div style="font-size: .8em; text-align: right;">(examples:&nbsp;&nbsp;google.ie&nbsp;&nbsp;google.co.kr)</div>
                     </td>
-                    <td valign=top>
+                    <td valign="top">
                         Language
                         <br>
                         <select name="searchLangGoogle">
@@ -168,9 +163,9 @@ function changeColor(){
 
                 <tr id="rowYahoo">
                     <td>
-                        <input type=radio name="searchOption" id="searchOptRadio10" value="10" onClick="changeColor()"><label for="searchOptRadio10">Yahoo! search</label>
+                        <input type="radio" name="searchOption" id="searchOptRadio10" value="10" onClick="changeColor()"><label for="searchOptRadio10">Yahoo! search</label>
                     </td>
-                    <td valign=top colspan="2">
+                    <td valign="top" colspan="2">
                         Pick your Yahoo!
                         <select name="searchUrlYahoo">
                             <option value="search.yahoo.com" selected>Default - search.yahoo.com</option>
@@ -205,7 +200,7 @@ function changeColor(){
                         </select>
                         <br>
                         or type custom URL
-                        <input type=text name="customSearchUrlYahoo" size=15 maxlength=45 value="">
+                        <input type="text" name="customSearchUrlYahoo" size="15" maxlength="45" value="">
 
                         <div style="font-size: .8em; ">(example:&nbsp;&nbsp;uk.search.yahoo.com)</div>
                     </td>
@@ -213,7 +208,7 @@ function changeColor(){
 
                 <tr id="rowNoSearch">
                     <td colspan="3">
-                        <input type=radio name="searchOptionYahoo" id="searchOptRadio0" value="0" onClick="changeColor()"><label for="searchOptRadio0">No search</label>
+                        <input type="radio" name="searchOptionYahoo" id="searchOptRadio0" value="0" onClick="changeColor()"><label for="searchOptRadio0">No search</label>
                     </td>
                 </tr>
             </table>
@@ -223,8 +218,8 @@ function changeColor(){
                 <input type="submit" value="Submit">
             </p>
 
-            <input type=hidden name="loadDataName" value="<%=loadDataName%>" >
-            <input type=hidden name="searchLangYahoo" value="" >
+            <input type="hidden" name="loadDataName" value="<%=loadDataName%>" >
+            <input type="hidden" name="searchLangYahoo" value="" >
         </form>
 
 	<!--set focus in javascript-->
