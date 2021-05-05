@@ -86,13 +86,15 @@ String searchradio = request.getParameter("searchradio");
         if (state.equals("1")){
             %>
             <center>
-            <FORM NAME="jump" METHOD="POST" ACTION="admin.jsp"> 
-            Username: <input name="user" size="15" maxlength="30"><p>
-            Password: <INPUT TYPE=password NAME="pass" SIZE="15" MAXLENGTH=30>
-            <INPUT TYPE=hidden NAME=state VALUE=2 >
-            <INPUT TYPE=hidden NAME=fromstate VALUE=1>
-            <p><INPUT TYPE="submit" VALUE="Submit">
-            </FORM>
+                <form name="jump" method="POST" action="admin.jsp"> 
+                Username: <input name="user" size="15" maxlength="30">
+                <p>
+                    Password: <input type="password" name="pass" size="15" maxlength="30">
+                    <input type="hidden" name="state" value="2" >
+                    <input type="hidden" name="fromstate" value="1">
+                <p>
+                    <input type="submit" value="Submit">
+                </form>
             </center>
 
             <!--set focus in javascript-->
