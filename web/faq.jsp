@@ -32,7 +32,7 @@
             <div class="col_middle_right">
                 <table>
                     <tr>
-                        <td valign=top>
+                        <td valign="top">
 
                             <!-- do not put p tag on first entry, add it for the others -->
                             <h1>Frequently Asked Questions</h1>
