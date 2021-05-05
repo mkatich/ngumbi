@@ -45,7 +45,7 @@ table.start_with_example td {
         <form name="new1" method="post" action="new2.jsp">
 
             <div style="padding-bottom: 30px;">
-                <input type=submit name="loadDataName" value="Start from scratch">
+                <input type="submit" name="loadDataName" value="Start from scratch">
             </div>
 
             <table class="start_with_example" >
@@ -61,41 +61,41 @@ table.start_with_example td {
 
                 <!-- example1 row -->
                 <tr>
-                    <td valign=top>
+                    <td valign="top">
                         <a target="blah" href="user/example1">example1</a>
                     </td>
-                    <td align=center valign=bottom>
-                        <input type=submit name="loadDataName" value="example1">
+                    <td align="center" valign="bottom">
+                        <input type="submit" name="loadDataName" value="example1">
                     </td>
                 </tr>
 
                 <!-- example2 row -->
                 <tr>
-                    <td valign=top>
+                    <td valign="top">
                         <a target="blah" href="user/example2">example2</a>
                     </td>
-                    <td align=center valign=bottom>
-                        <input type=submit name="loadDataName" value="example2">
+                    <td align="center" valign="bottom">
+                        <input type="submit" name="loadDataName" value="example2">
                     </td>
                 </tr>
 
                 <!-- example3 row -->
                 <tr>
-                    <td valign=top>
+                    <td valign="top">
                         <a target="blah" href="user/example3">example3</a>
                     </td>
-                    <td align=center valign=bottom>
-                        <input type=submit name="loadDataName" value="example3">
+                    <td align="center" valign="bottom">
+                        <input type="submit" name="loadDataName" value="example3">
                     </td>
                 </tr>
 
                 <!-- example4 row -->
                 <tr>
-                    <td valign=top>
+                    <td valign="top">
                         <a target="blah" href="user/example4">example4</a>
                     </td>
-                    <td align=center valign=bottom>
-                        <input type=submit name="loadDataName" value="example4">
+                    <td align="center" valign="bottom">
+                        <input type="submit" name="loadDataName" value="example4">
                     </td>
                 </tr>
             </table>
