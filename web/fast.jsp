@@ -36,7 +36,7 @@
             <div class="col_middle_right">
                 <table>
                     <tr>
-                        <td valign=top>
+                        <td valign="top">
 
                             <p>
                                 Not only is ngumbi a very light web site to load, it's on a
