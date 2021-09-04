@@ -11,4 +11,11 @@ package UserPage;
  */
 public class UserPageDAO {
     
+    //Attributes
+    
+    
+    
+    //Constructors
+    
+    
 }
