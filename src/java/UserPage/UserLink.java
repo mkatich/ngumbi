@@ -13,4 +13,12 @@ package UserPage;
  */
 public class UserLink {
     
+    //Attributes
+    
+    
+    
+    //Constructors
+    
+    
+    
 }
