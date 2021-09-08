@@ -7,21 +7,17 @@
         and displays links on webpage in organized way.
     
 --%>
-
+<%@page import="UserPage.*"%>
 <%@page import="DbConnectionPool.DbConnectionPool"%>
 <%@ page language="java" import="java.sql.*" %>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <jsp:useBean id="logon" scope="session" class="logonBean.logon" /> 
 <jsp:useBean id="helperMethods" scope="page" class="helperMethodsBean.helperMethods" />
-
 <%
 //get the username which was passed as an argument ? thing
-String user = request.getParameter("user");
-
-boolean userExists = false;
+String usernameInput = request.getParameter("user");
 
 String errorMsg = "";
-
 
 //defaults, these are used when there is no parameter passed, it's white
 String linkColor = "#0000cc";
@@ -34,102 +30,14 @@ String textColor = "000000";
 //String fontSize = "-1";
 String fontFamily = "arial,sans-serif,helvetica";
 
-
-
-
-//get other user data
-String qUserData = "SELECT searchOption, searchUrl, searchLang FROM users WHERE username = ? ";
-PreparedStatement psUserData = null;
-ResultSet rsUserData = null;
-int searchFlag = 0;
-String searchUrl = "";
-String searchLang = "";
-
-//get user links
-String qUserLinks = ""
-        + "SELECT "
-        + "ul.link_name AS link_name, ul.link_address AS link_address, ul.cat AS cat, ul.sub_cat_rank AS sub_cat_rank "
-        + "FROM user_links ul LEFT JOIN users u ON (ul.user_id = u.user_id) "
-        + "WHERE u.username = ? "
-        + "ORDER BY cat_rank, sub_cat_rank, link_rank";
-PreparedStatement psUserLinks = null;
-ResultSet rsUserLinks = null;
-String[][] links = null;
-
-Connection conn = null;
-try {
-    conn = DbConnectionPool.getConnection();//fetch a connection
-    if (conn != null){
-        //perform queries
-        
-        //get user data (metadata, not links)
-        psUserData = conn.prepareStatement(qUserData);
-        psUserData.setString(1, user);
-        rsUserData = psUserData.executeQuery();
-        
-        if (rsUserData.next()){
-            searchFlag = rsUserData.getInt("searchOption");
-            searchUrl = rsUserData.getString("searchUrl");
-            searchLang = rsUserData.getString("searchLang");
-            
-            userExists = true;
-            
-            //		**ADMIN UPDATE**	
-            //update the last viewed value in users table
-            //checks reporting turned on, then adds entry to history table for this view, while deleting oldest entry
-            helperMethods.adminUpdate(user, "view");
-        }
-        
-        //get user links
-        psUserLinks = conn.prepareStatement(qUserLinks);
-        psUserLinks.setString(1, user);
-        rsUserLinks = psUserLinks.executeQuery();
-        
-        int countUserLinks = 0;
-        while (rsUserLinks.next()){
-            countUserLinks++;
-        }
-        rsUserLinks.beforeFirst();
-        
-        links = new String[countUserLinks][4];
-        countUserLinks = 0;
-        while (rsUserLinks.next()){
-            String currCat = rsUserLinks.getString("cat");
-            String currSubCatRank = rsUserLinks.getString("sub_cat_rank");
-            String currLinkAddr = rsUserLinks.getString("link_address");
-            String currLinkName = rsUserLinks.getString("link_name");
-            
-            links[countUserLinks][0] = currCat;
-            links[countUserLinks][1] = currSubCatRank;
-            links[countUserLinks][2] = currLinkAddr;
-            links[countUserLinks][3] = currLinkName;
-            
-            countUserLinks++;
-        }
-        
-    }
-}
-catch (SQLException e) {
-    DbConnectionPool.outputException(e, "user_page.jsp", 
-            new String[]{"qUserData", qUserData, "qUserLinks", qUserLinks});
-    errorMsg = "There was an error retrieving your page.";
-}
-finally {
-    DbConnectionPool.closeResultSet(rsUserData);
-    DbConnectionPool.closeStatement(psUserData);
-    DbConnectionPool.closeResultSet(rsUserLinks);
-    DbConnectionPool.closeStatement(psUserLinks);
-    DbConnectionPool.closeConnection(conn);
-}
-
-
-
+//retrieve all info needed for user page from database
+UserPage userPage = UserPageDAO.getUserPage(usernameInput);
 
 
 %>
 <html>
 <head>
-<title><%=user%> &#64; ngumbi.com</title>
+<title><%=usernameInput%> &#64; ngumbi.com</title>
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 <link rel="stylesheet" type="text/css" href="../style.css">
 <style type="text/css">
@@ -157,17 +65,23 @@ a.user_link {
 
 -->
 </style>
-
 <jsp:include page="inc_google_analytics.jsp" />
 </head>
 <body>
-    
     <%
-        
-
+    
+    
     //check if username exists
-    if (userExists){
-        //it exists, continue
+    if (userPage != null){
+        
+        User user = userPage.getUser();
+        UserLink[] userLinks = userPage.getUserLinks();
+        
+        //pull user's search option details
+        int searchOption = user.getSearchOption();
+        String searchUrl = user.getSearchUrl();
+        String searchLang = user.getSearchLang();
+        
         
         //Show current date and time
         %>
@@ -178,14 +92,14 @@ a.user_link {
             <tr valign="top">
                 <td valign="top" style="text-align: center;">
                     <%
-
+                    
                     //Search check, flag is 
                     //	0 - no search 
                     // 	1 - ngumbi branded google search (default)
                     //	2 - regular google search
                     //	3 - ngumbi branded safe google search
                     //	10 - yahoo search
-                    if (searchFlag == 0){
+                    if (searchOption == 0){
                         //0 - no search 
                     }
                     //else if (searchFlag == 2){
@@ -195,21 +109,18 @@ a.user_link {
                     //else if (){
                     //
                     //}
-                    else if (searchFlag >= 1 && searchFlag <= 9){
+                    else if (searchOption >= 1 && searchOption <= 9){
                         //1-9: we have some form of google search
                         boolean useGoogleCse = false;
                         String searchSuffix2 = "search";
-
-                        if (searchFlag == 1 || searchFlag == 3){
+                        
+                        if (searchOption == 1 || searchOption == 3){
                             //both search type 1 and 3 use adsense branded custom search engine
                             searchSuffix2 = "cse";
                             useGoogleCse = true;//google.com/cse, ngumbi branded
                         }
-
-
-
+                        
                         %>
-
                         <!-- Search Google -->
                         <form name="search_form" action="http://<%=searchUrl%>/<%=searchSuffix2%>" id="cse-search-box">
                           <div>
@@ -222,7 +133,7 @@ a.user_link {
                                 %><input type="hidden" name="cx" value="partner-pub-8335750690638492:1547181858" /><%
                             }
 
-                            if (searchFlag == 3){
+                            if (searchOption == 3){
                                 //enable safe search strict here
                                 %><input type="hidden" name="safe" value="active" /><%
                             }
@@ -233,16 +144,15 @@ a.user_link {
                           </div>
                         </form>
                         <!-- end Search Google -->
-
+                        
                         <!--set focus to the search form text box in javascript-->
                         <script type="text/javascript"><!--
                         document.search_form.q.focus();
                         //--></script>
-
                         <%
                     }// end 1,2,3 google Search
 
-                    else if (searchFlag == 10){
+                    else if (searchOption == 10){
                         //10: yahoo search
 
                         %>
@@ -254,16 +164,16 @@ a.user_link {
                             <input type="submit" value="Search">
                         </form>
                         <!-- End Yahoo! Search -->
-
+                        
                         <!--set focus to the search form text box in javascript-->
                         <script type="text/javascript"><!--
                         document.myform.p.focus();
                         //--></script>
-
+                        
                         <%
                     }	
                     %>
-
+                    
                 </td>
                 <td align="right" valign="top">
 
@@ -281,9 +191,9 @@ a.user_link {
             </tr>
         </table>
         <!-- End Start Page Header (top table) -->
-
-
-
+        
+        
+        
         <!-- start main table -->
         <table cellpadding="0" cellspacing="8" border="0" style="margin-left: auto; margin-right: auto;"><%
             
@@ -291,31 +201,40 @@ a.user_link {
             int linkCounter = 0;
             int catCounter = 0;
             String currCat = "";
-            String currSubCatRank = "";
+            int currSubCatRank = 0;
             String currLinkAddr = "";
             String currLinkName = "";
             String lastCat = "";
-            String lastSubCatRank = "";
+            int lastSubCatRank = 0;
             
             //do the first link
-            if (links.length > 0){
-                currCat = links[linkCounter][0].replace('+',' ');//have to get first table entry to assign tracking variables
-                currSubCatRank = links[linkCounter][1];//of current category and subcategory
-                currLinkAddr = links[linkCounter][2];
-                currLinkName = links[linkCounter][3].replace('+',' ');
+            if (userLinks.length > 0){
+                
+                UserLink link = userLinks[linkCounter];
+                
+                currCat = link.getCat().replace('+',' ');//have to get first table entry to assign tracking variables
+                currSubCatRank = link.getSubCatRank();//of current category and subcategory
+                currLinkAddr = link.getLinkAddress();
+                currLinkName = link.getLinkName().replace('+',' ');
                 
                 //check if first link is a category-less one
                 if (currCat.equals("")){
-                    //first link doesn't have category
-                    %><!-- start table and print first link centered-->
-                    <tr><td valign="top" colspan="2"><center>
-                    <a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%
+                    //first link doesn't have category - make this one span across the whole 
+                    //top of the page, not broken into two columns
+                    %>
+                    <!-- start table and print first link -->
+                    <tr>
+                        <td valign="top" colspan="2">
+                            <a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%
                 }
                 
                 else {
                     //first link does have category, print first category, then first link
-                    %><tr><td valign="top" width="50%"><STRONG><%=currCat%></STRONG><br>
-                    <a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%
+                    %>
+                    <tr>
+                        <td valign="top" width="50%">
+                            <STRONG><%=currCat%></STRONG>
+                            <br><a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%
                     catCounter++;
                     lastCat = currCat;
                 }
@@ -325,24 +244,40 @@ a.user_link {
             }
 
             // first link is completed, now loop through rest
-            for (int i = 1; i < links.length; i++){
-                currCat = links[linkCounter][0].replace('+',' ');//have to get first table entry to assign tracking variables
-                currSubCatRank = links[linkCounter][1];//of current category and subcategory
-                currLinkAddr = links[linkCounter][2];
-                currLinkName = links[linkCounter][3].replace('+',' ');
-
+            for (int i = 1; i < userLinks.length; i++){
+                
+                UserLink link = userLinks[linkCounter];
+                
+                currCat = link.getCat().replace('+',' ');//have to get first table entry to assign tracking variables
+                currSubCatRank = link.getSubCatRank();//of current category and subcategory
+                currLinkAddr = link.getLinkAddress();
+                currLinkName = link.getLinkName().replace('+',' ');
+                
                 if (!(currCat.equals(lastCat))){
                     //we have a new category so indent accordingly
                     catCounter++;
                     
-                    if (((catCounter%2) == 0) && !(lastCat.equals(""))){//we are still in the same row of big table, don't <tr> yet
+                    if (((catCounter % 2) == 0) && !(lastCat.equals(""))){
+                        //we are still in the same row of big table, don't <tr> yet
                         //also, have new category but last category wasn't null, so don't start new line under category-less pool
-                        %></td><td valign="top" width="50%"><strong><%=currCat%></strong><br><a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%
+                        %>
+                        </td>
+                        <td valign="top" width="50%">
+                            <strong><%=currCat%></strong>
+                            <br><a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%
                     }
-                    else { // we jumped to next row of big table, do <tr>
-                        %></td></tr><tr><td valign="top"><strong><%=currCat%></strong><br><a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%
+                    else {
+                        // we jumped to next row of big table, do <tr>
+                        %>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="top" width="50%">
+                            <strong><%=currCat%></strong>
+                            <br><a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%
 
-                        if (lastCat.equals("")){//we're on 1st new category since the category-less pool
+                        if (lastCat.equals("")){
+                            //we're on 1st new category since the category-less pool
                             //do nothing, already accounted for
                         }
                     }
@@ -350,13 +285,15 @@ a.user_link {
 
                 else {
                     //we are still in same category (or non-category)
-                    if (!currSubCatRank.equals(lastSubCatRank)){
+                    if (currSubCatRank != lastSubCatRank){
                         //we are in a new subcategory, do <br>
-                        %><br><a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%		
+                        %>
+                            <br><a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%		
                     }
                     else{
                         //we are in same category and subcategory  
-                        %><a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%
+                        %>
+                            <a href="<%=currLinkAddr%>" class="user_link"><%=currLinkName%></a>&nbsp;&nbsp;<%
                     }	
                 }
 
@@ -364,21 +301,15 @@ a.user_link {
                 lastSubCatRank = currSubCatRank;
                 linkCounter++;
                 
-                //do newline after link
-                //this prevents html for links from all being on same line, and
-                //not spacing and wrapping properly in some browsers
-                %>
-                <% 	
-            } 	
+            }
 
             %>
-            </td>
-            </tr>
+                        </td>
+                    </tr>
         </table>
         <!-- End main table -->
-
-
-
+        
+        
         <!-- list total links and categories -->
         <p style="text-align: center; font-size: .8em; padding-bottom: 20px;">
             Displaying <b><%=linkCounter%></b> links
@@ -391,13 +322,13 @@ a.user_link {
             <br>
             <a href="../index.jsp">ngumbi</a>
         </p>
-
-
+        
+        
         <%
 
     }//end if userExists
     else {
-        errorMsg = "You've entered an invalid username ("+user+")";
+        errorMsg = "You've entered an invalid username ("+usernameInput+")";
     }
     
     if (!errorMsg.equals("")){
