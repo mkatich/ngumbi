@@ -8,7 +8,7 @@ public class helperMethods {
     // this method is called when the actual edits to a user's table are made or a view occurs
     // it records the edit data as a new entry in the history table if recording is turned on
     // and also updates the lastEdited or lastViewed field of the users table for this user
-    public void adminUpdate(String username, String updateType) {
+    public static void adminUpdate(String username, String updateType) {
         
         //prep update for the users table to set the lastViewed or lastEdited
         //values. We'll check which to use below.
