@@ -43,22 +43,31 @@ UserPage userPage = UserPageDAO.getUserPage(usernameInput);
 <style type="text/css">
 <!--
 
-a:link{	color:<%=linkColor%>; 
-		text-decoration:underline;
-		font-family:<%=fontFamily%>;}
-a:visited{	color:<%=visitedColor%>; 
-			text-decoration:underline;
-			font-family:<%=fontFamily%>;}
-a:hover {	color:<%=hoverColor%>; 
-			text-decoration:none;
-			font-family:<%=fontFamily%>;}
-a:active {	color:<%=activeColor%>; 
-			text-decoration:none;
-			font-family:<%=fontFamily%>;}
-body { 	background-color: <%=bgColor%>; 
-		color: <%=textColor%>;
-		font-family:<%=fontFamily%>;}
-
+a:link {
+    color:<%=linkColor%>;
+    text-decoration:underline;
+    font-family:<%=fontFamily%>;
+}
+a:visited {
+    color:<%=visitedColor%>;
+    text-decoration:underline;
+    font-family:<%=fontFamily%>;
+}
+a:hover {
+    color:<%=hoverColor%>;
+    text-decoration:none;
+    font-family:<%=fontFamily%>;
+}
+a:active {
+    color:<%=activeColor%>;
+    text-decoration:none;
+    font-family:<%=fontFamily%>;
+}
+body {
+    background-color: <%=bgColor%>;
+    color: <%=textColor%>;
+    font-family:<%=fontFamily%>;
+}
 a.user_link {
     font-size: .8em;
 }
