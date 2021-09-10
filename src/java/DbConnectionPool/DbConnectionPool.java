@@ -84,7 +84,7 @@ public class DbConnectionPool {
         //database, and set the instance variable for the DbConnectionPool object
         config = new HikariConfig();
         config.setJdbcUrl(DB_BASEURL+DB_NAME);
-        config.setUsername(DB_USERNAME); 
+        config.setUsername(DB_USERNAME);
         config.setPassword(DB_PASSWORD);
         config.addDataSourceProperty("cachePrepStmts" , "true");//Neither of the above parameters have any effect if the cache is in fact disabled, as it is by default. You must set this parameter to true.
         config.addDataSourceProperty("prepStmtCacheSize" , "250");//This sets the number of prepared statements that the MySQL driver will cache per connection. The default is a conservative 25. We recommend setting this to between 250-500.
@@ -201,8 +201,8 @@ public class DbConnectionPool {
 
     }
     
-    
-    /*public static void release(Connection connection) {
+    /*
+    public static void release(Connection connection) {
         try {
             if (connection != null) {
                 connection.close();
@@ -213,7 +213,8 @@ public class DbConnectionPool {
             String stackTrace = sw.toString();
             System.out.println(stackTrace);
         }
-    }*/
+    }
+    */
     
     public static Properties readDbPropertiesFile() {
         //readPropertiesFile
@@ -248,7 +249,7 @@ public class DbConnectionPool {
         return prop;
     }
     
-    
+    /*
     private static void runDbTest() throws SQLException {
         Connection connection = getConnection(); // fetch a connection
         if (connection != null){
@@ -261,7 +262,7 @@ public class DbConnectionPool {
             connection.close();
         }
     }
-    
+    */
     
     //Standardized error outputting methods. These are here since they'll often be used together with
     //the connection methods above.
@@ -298,8 +299,5 @@ public class DbConnectionPool {
     public static void outputSqlException(SQLException e, String callerName, String[] queryUpdates) {
         outputException(e, callerName, queryUpdates);
     }
-        
-    
-    
     
 }
