@@ -7,6 +7,8 @@ package UserPage;
 import DbConnectionPool.DbConnectionPool;
 import helperMethodsBean.helperMethods;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -72,23 +74,15 @@ public class UserPageDAO {
                     //create User component of UserPage
                     User user = null;
                     
-                    int userId1 = -1;
-                    String pass = "";
-                    int searchOption = -1;
-                    String searchUrl = "";
-                    String searchLang = "";
-                    Timestamp createdDate = null;
-                    Timestamp lastViewed = null;
-                    Timestamp lastEdited = null;
                     if (rsUserData.next()){
-                        userId1 = rsUserData.getInt("user_id");
-                        pass = rsUserData.getString("pass");
-                        searchOption = rsUserData.getInt("searchOption");
-                        searchUrl = rsUserData.getString("searchUrl");
-                        searchLang = rsUserData.getString("searchLang");
-                        createdDate = rsUserData.getTimestamp("createdDate");
-                        lastViewed = rsUserData.getTimestamp("lastViewed");
-                        lastEdited = rsUserData.getTimestamp("lastEdited");
+                        int userId1 = rsUserData.getInt("user_id");
+                        String pass = rsUserData.getString("pass");
+                        int searchOption = rsUserData.getInt("searchOption");
+                        String searchUrl = rsUserData.getString("searchUrl");
+                        String searchLang = rsUserData.getString("searchLang");
+                        Timestamp createdDate = rsUserData.getTimestamp("createdDate");
+                        Timestamp lastViewed = rsUserData.getTimestamp("lastViewed");
+                        Timestamp lastEdited = rsUserData.getTimestamp("lastEdited");
                         
                         user = new User(userId1, username, pass, searchOption, searchUrl, searchLang, createdDate, lastViewed, lastEdited);
                         
@@ -104,13 +98,13 @@ public class UserPageDAO {
                     rsUserLinks = psUserLinks.executeQuery();
 
                     int countUserLinks = 0;
-                    while (rsUserLinks.next()){
-                        countUserLinks++;
-                    }
-                    rsUserLinks.beforeFirst();
+                    //while (rsUserLinks.next()){
+                    //    countUserLinks++;
+                    //}
+                    //rsUserLinks.beforeFirst();
                     
-                    //create UserLink array component of UserPage
-                    UserLink[] userLinks = new UserLink[countUserLinks];
+                    //create UserLink list to hold results initially when iterating array component of UserPage
+                    List<UserLink> userLinksList = new ArrayList<>();
                     
                     countUserLinks = 0;
                     while (rsUserLinks.next()){
@@ -125,10 +119,14 @@ public class UserPageDAO {
                         
                         UserLink currUserLink = new UserLink(userLinkId, userId2, linkName, linkAddress, cat, catRank, subCatRank, linkRank);
                         
-                        userLinks[countUserLinks] = currUserLink;
+                        userLinksList.add(currUserLink);
+                        //userLinks[countUserLinks] = currUserLink;
                         
                         countUserLinks++;
                     }
+                    
+                    //create UserLink array component of UserPage - convert the list gathered above
+                    UserLink[] userLinks = userLinksList.toArray(new UserLink[userLinksList.size()]);
                     
                     //put the user data and user links array together into UserPage object
                     userPage = new UserPage(user, userLinks);
@@ -147,7 +145,6 @@ public class UserPageDAO {
                 DbConnectionPool.closeStatement(psUserLinks);
                 DbConnectionPool.closeConnection(conn);
             }
-            
             
         }
         
