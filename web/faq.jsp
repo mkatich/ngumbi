@@ -2,12 +2,12 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<title>ngumbi.com</title>
-<meta http-equiv="content-type" content="text/html;charset=utf-8">
-<link rel="stylesheet" type="text/css" href="style.css">
-<link rel="icon" href="favicon.ico" type="image/x-icon">
-<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-<jsp:include page="inc_google_analytics.jsp" />
+    <title>ngumbi.com</title>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <jsp:include page="inc_google_analytics.jsp" />
 </head>
 <body>
     
@@ -77,11 +77,11 @@
                             </p>
 
                             <p style="font-size: .8em; font-weight: bold; font-family: 'Courier New';">
-                                    (actual email text)
-                                    <br>me: how much you want for it?
-                                    <br>ross: We will consider all offers.
-                                    <br>me: $25
-                                    <br>ross: Thanks but no thanks.
+                                (actual email text)
+                                <br>me: how much you want for it?
+                                <br>ross: We will consider all offers.
+                                <br>me: $25
+                                <br>ross: Thanks but no thanks.
                             </p>
                             <a href="#backtotop" class="small_green_link">Back to top</a>
 

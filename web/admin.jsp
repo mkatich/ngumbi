@@ -32,7 +32,6 @@ String fromstate = request.getParameter("fromstate");
 <html>
 <head>
     <title>Ngumbi Admin</title>
-
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <link rel="stylesheet" type="text/css" href="style-admin.css">
     <jsp:include page="inc_google_analytics.jsp" />
