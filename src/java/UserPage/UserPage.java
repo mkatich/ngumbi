@@ -17,12 +17,13 @@ public class UserPage {
     //Attributes
     private User user;
     private UserLink[] userLinks;
-    
+    private int numCats;
     
     //Constructor
-    public UserPage(User user, UserLink[] userLinks) {
+    public UserPage(User user, UserLink[] userLinks, int numCats) {
         this.user = user;
         this.userLinks = userLinks;
+        this.numCats = numCats;
     }
     
     
@@ -41,8 +42,40 @@ public class UserPage {
         this.userLinks = userLinks;
     }
     
+    public int getNumCats() {
+        return numCats;
+    }
+    public void setNumCats(int numCats) {
+        this.numCats = numCats;
+    }
+    
+    public int getNumLinks() {
+        return this.userLinks.length;
+    }
+    
     public boolean exists() {
         return this.user != null;
     }
+    
+    
+    
+    
+    /*
+    public String getUserPageHtml() {
+        String html = "";
+        
+        //gather user's search option details
+        int searchOption = user.getSearchOption();
+        String searchUrl = user.getSearchUrl();
+        String searchLang = user.getSearchLang();
+        
+        
+        
+        return html;
+    }
+    */
+
+    
+    
     
 }

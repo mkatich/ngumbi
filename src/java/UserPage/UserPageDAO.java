@@ -96,17 +96,13 @@ public class UserPageDAO {
                     psUserLinks = conn.prepareStatement(qUserLinks);
                     psUserLinks.setString(1, username);
                     rsUserLinks = psUserLinks.executeQuery();
-
-                    int countUserLinks = 0;
-                    //while (rsUserLinks.next()){
-                    //    countUserLinks++;
-                    //}
-                    //rsUserLinks.beforeFirst();
                     
                     //create UserLink list to hold results initially when iterating array component of UserPage
                     List<UserLink> userLinksList = new ArrayList<>();
                     
-                    countUserLinks = 0;
+                    //int countUserLinks = 0;
+                    int countCats = 0;//used for counting categories
+                    String lastCat = "";//used for counting categories
                     while (rsUserLinks.next()){
                         int userLinkId = rsUserLinks.getInt("user_link_id");
                         int userId2 = rsUserLinks.getInt("user_id");
@@ -122,14 +118,18 @@ public class UserPageDAO {
                         userLinksList.add(currUserLink);
                         //userLinks[countUserLinks] = currUserLink;
                         
-                        countUserLinks++;
+                        //countUserLinks++;
+                        if (!(cat.equals(lastCat))){
+                            countCats++;
+                        }
+                        lastCat = cat;
                     }
                     
                     //create UserLink array component of UserPage - convert the list gathered above
                     UserLink[] userLinks = userLinksList.toArray(new UserLink[userLinksList.size()]);
                     
                     //put the user data and user links array together into UserPage object
-                    userPage = new UserPage(user, userLinks);
+                    userPage = new UserPage(user, userLinks, countCats);
 
                 }
             }

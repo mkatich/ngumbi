@@ -94,4 +94,33 @@ public class UserLink {
         this.linkRank = linkRank;
     }
     
+    //returns html content for this link which can vary 
+    //depending on given linkDisplayMode
+    public String getDispHtml() {
+        return getDispHtml(0);
+    }
+    public String getDispHtml(int linkDisplayMode){
+        String linkHtml = "";
+        
+        switch (linkDisplayMode) {
+            case 0:
+                linkHtml = "<a href=\""+this.linkAddress+"\" class=\"user_link\">"+this.linkName.replace('+',' ')+"</a>";
+                break;
+            case 1:
+                String linkColor = "#0000cc";
+                linkHtml = "<font color=\""+linkColor+"\"><u>"+this.linkName+"</u></font>";
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+            case 4:
+                break;
+            default:
+                break;
+        }
+        
+        return linkHtml;
+    }
+    
 }
