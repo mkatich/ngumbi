@@ -668,9 +668,9 @@ else {
                             ResultSet rsdelsubcat = null;
                             ResultSet rsdellink = null;
                             try {
-                                stat551 = conn.createStatement();
+                                stat551 = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
                                 rsdelsubcat = stat551.executeQuery(deletedCat);
-                                stat552 = conn.createStatement();
+                                stat552 = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
                                 rsdellink = stat552.executeQuery(deletedSubCat);
                             }
                             catch (Exception e) {
@@ -686,7 +686,7 @@ else {
                                 Statement stat553 = null;
                                 ResultSet rsdelcat = null;
                                 try {
-                                    stat553 = conn.createStatement();
+                                    stat553 = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
                                     rsdelcat = stat553.executeQuery(linksQuery2);
                                 }
                                 catch (Exception e) {
