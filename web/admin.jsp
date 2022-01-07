@@ -147,7 +147,7 @@ String fromstate = request.getParameter("fromstate");
                         conn = DbConnectionPool.getConnection();//fetch a connection
                         if (conn != null){
                             //perform queries/updates
-                            psHistory = conn.prepareStatement(historyQuery);
+                            psHistory = conn.prepareStatement(historyQuery, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
                             rsHistory = psHistory.executeQuery();
 
                             //get saved data
@@ -235,7 +235,7 @@ String fromstate = request.getParameter("fromstate");
                         conn = DbConnectionPool.getConnection();//fetch a connection
                         if (conn != null){
                             //perform queries/updates
-                            psHistory = conn.prepareStatement(historyQuery);
+                            psHistory = conn.prepareStatement(historyQuery, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
                             rsHistory = psHistory.executeQuery();
 
                             //get saved data
