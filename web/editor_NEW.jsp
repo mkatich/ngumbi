@@ -19,15 +19,12 @@ Explanation of states of the user interface.
 	Add a link, Edit a link, Move a link, Delete a link, Move a category, Rename a category, Cancel, Start 
 	Over etc. State 2 also does all the SQL execution after editor has come from another state editing a 
 	certain thing (using fromstate variable).
-*state 3a - they chose Add a link option.  Has form for user to enter linkname, link url, category,
-	and row option.  Existing categories are shown among the choices, also the default "no category" 
-	and user can input new category.  The row option determines which row the link will go into in that category,
-	the default is add the new link to very end category. The other row options are to add link to a new row
-	and add to a specific row (which requires another step). They do not enter linkrank, if they want to 
+*state 3a - they chose Add a link option.  Has form for user to enter linkname, link url, category.
+	Existing categories are shown among the choices, also the default "no category" 
+	and user can input new category. They do not enter linkrank, if they want to 
 	add a link in between other links they will have to use the Move a link.
 	*state 3a_1 - user given error message for trying to add link or name already in use, 
 		or other error and can try again
-	*state 3a_2 - user chose to add to specific row, this displays choice of rows user can click
 *state 3e - they chose Edit a link.  This state has plain text in the yellow column saying to click the
 	link they want to edit on the left.  The normal jumpstation	links are now links that will tell the 
 	editor (state 3e_1) which one they chose in the next state
@@ -141,8 +138,8 @@ else if (state.equals("2")){
         //
         
         
-        if (fromstate.equals("3a") || fromstate.equals("3a_1") || fromstate.equals("3a_2")){
-            //From State 3a, 3a_1, 3a_2, Add a Link
+        if (fromstate.equals("3a") || fromstate.equals("3a_1")){
+            //From State 3a, 3a_1, Add a Link
         }
         else if (fromstate.equals("3e_1") || fromstate.equals("3e_2")){
             //From State 3e_1, 3e_2, Edit a Link
@@ -316,7 +313,7 @@ body {
         linkDisplayMode = "1";//look like links but are plain text
 
         %>
-        <table cellpadding="0" cellspacing="0" border="0" width=100% style="height: 100%;">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
             <tr>
                 <td valign="top">
                     <jsp:include page="user_page_include_top.jsp" />
@@ -359,7 +356,7 @@ body {
         //state 2, display main edit options
         if (state.equals("2")){
             %>
-            <table cellpadding="0" cellspacing="0" border="0" width=100% style="height: 100%;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
                 <tr>
                     <td valign="top">
                         <jsp:include page="user_page_include_links.jsp" >
@@ -388,7 +385,7 @@ body {
         //state 3o, display 'more options', non-basic options
         else if (state.equals("3o")){
             %>
-            <table cellpadding="0" cellspacing="0" border="0" width=100% style="height: 100%;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
                 <tr>
                     <td valign="top">
                         <jsp:include page="user_page_include_links.jsp" >
@@ -590,8 +587,8 @@ else {
                     */
                     if (state.equals("2")){
                             
-                        //From State 3a, 3a_1, 3a_2, Add a Link
-                        if (fromstate.equals("3a") || fromstate.equals("3a_1") || fromstate.equals("3a_2")){
+                        //From State 3a, 3a_1, Add a Link
+                        if (fromstate.equals("3a") || fromstate.equals("3a_1")){
 
                             //here replace any single quote, space, double quote, etc for saving in MySQL
                             catradio = helperMethods.replaceBackslash(catradio);
@@ -718,7 +715,10 @@ else {
 
                             if (inputCheckOk) {
                                 //continue adding link operations
-
+                                
+                                
+                                //ROWRADIO NOW IGNORED. ALL LINKS ADDED TO END OF THE CHOSEN CATEGORY
+                                //**********
                                 //here check what rowradio was selected,
                                 //if 1 (add to end of row) need to check catrank, subcatrank, linkrank of last link in the category
                                 //		then add link with same catrank, subcatrank, and one greater linkrank.
@@ -726,173 +726,117 @@ else {
                                 //if 3 (add to specific row), need to ask for more info, which row? Will send to state 3a_1
                                 //		which will check how many distinct subcatranks are in this category and display those as a
                                 //		choice in the yellow edit column
-                                if (rowradio.equals("1") || rowradio.equals("2")){
+                                
+                                int catrankInt = 1;
+                                int subcatrankInt = 1;
+                                int linkrankInt = 1;
 
-                                    int catrankInt = 1;
-                                    int subcatrankInt = 1;
-                                    int linkrankInt = 1;
+                                if (catradio.equals("null")){ //they entered new category name
 
-                                    if (catradio.equals("null")){ //they entered new category name
-
-                                        //get highest catrank (last category value) so can add new category after it
-                                        Statement stat13 = null;
-                                        ResultSet rslastcat = null;
-                                        String lastCat = "SELECT MAX(cat_rank) AS cat_rank FROM user_links where user_id = "+user_id;
-                                        try {
-                                                stat13 = conn.createStatement();
-                                                rslastcat = stat13.executeQuery(lastCat);
-                                        }
-                                        catch (Exception e) {
-                                                out.print("Unable to make connection to production database");
-                                                out.print(e);
-                                        }
-                                        if (rslastcat.next()){ //if no links yet, this will be false
-                                                catrankInt = rslastcat.getInt("cat_rank") + 1;
-                                        }
-
-                                        //add the link
-                                        Statement stat14 = null;
-
-                                        String addLink = "INSERT INTO user_links (user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) VALUES ("+user_id+", '"+linknamenew+"','"+linkurlnew+"','"+catnew+"',"+catrankInt+","+subcatrankInt+","+linkrankInt+")";
-                                        //String addLink = "INSERT INTO "+user+" VALUES ('"+linknamenew+"','"+linkurlnew+"','"+catnew+"',"+catrankInt+","+subcatrankInt+","+linkrankInt+")";
-                                        try {
-                                                stat14 = conn.createStatement();
-                                                stat14.executeUpdate(addLink);
-                                        }
-                                        catch (Exception e) {
-                                                out.print("Unable to make connection to production database");
-                                                out.print(e);
-                                        }
-
-                                        rslastcat.close();
-
+                                    //get highest catrank (last category value) so can add new category after it
+                                    Statement stat13 = null;
+                                    ResultSet rslastcat = null;
+                                    String lastCat = "SELECT MAX(cat_rank) AS cat_rank FROM user_links where user_id = "+user_id;
+                                    try {
+                                            stat13 = conn.createStatement();
+                                            rslastcat = stat13.executeQuery(lastCat);
                                     }
-                                    else {
-                                        //they chose existing category name, or no category
-
-                                        //lastLink query gets the catrank, subcatrank, and linkrank from the last link in the category
-                                        //  eg. that with the greatest linkrank in the set of the greatest subcatrank
-                                        //initial FROM statement returns a table of info from the links in last subcategory of the category specified
-                                        //nested tables in the main WHERE statement identify the highest linkrank in the highest subcategory of the category specified
-                                        //
-                                        //formatted:	SELECT One.catrank, One.subcatrank, One.linkrank
-                                        //				FROM 	(SELECT Two.catrank, Two.subcatrank, Two.linkrank
-                                        //						 FROM etable Two
-                                        //						 WHERE Two.subcatrank = (SELECT MAX(subcatrank)
-                                        //												 FROM etable
-                                        //												 WHERE cat = 'Reference')
-                                        //								&& cat = 'Reference')
-                                        //				AS One
-                                        //				WHERE One.linkrank = (SELECT MAX(linkrank)
-                                        //									  FROM etable
-                                        //									  WHERE subcatrank = (SELECT MAX(subcatrank)
-                                        //														  FROM etable
-                                        //														  WHERE cat = 'Reference')
-                                        //											&& cat = 'Reference')
-
-
-
-
-                                        //String lastLink = "SELECT One.catrank, One.subcatrank, One.linkrank FROM (SELECT Two.catrank, Two.subcatrank, Two.linkrank FROM "+user+" Two WHERE Two.subcatrank = (SELECT MAX(subcatrank) FROM "+user+" WHERE cat = '"+catnew+"') && Two.cat = '"+catnew+"') AS One WHERE One.linkrank = (SELECT MAX(linkrank) FROM "+user+" WHERE subcatrank = (SELECT MAX(subcatrank) FROM "+user+" WHERE cat = '"+catnew+"') && cat = '"+catnew+"')";
-
-                                        //with this new lastLink query, the first result is the data from the last link in the category given (even if blank)
-                                        String lastLink = "SELECT cat, cat_rank, sub_cat_rank, link_rank FROM user_links WHERE user_id = "+user_id+" AND cat = '"+catnew+"' ORDER BY sub_cat_rank DESC, link_rank DESC";
-                                        Statement stat15 = null;
-                                        ResultSet rslastlink = null;
-                                        try {
-                                            stat15 = conn.createStatement();
-                                            rslastlink = stat15.executeQuery(lastLink);
-                                        }
-                                        catch (Exception e) {
+                                    catch (Exception e) {
                                             out.print("Unable to make connection to production database");
                                             out.print(e);
-                                        }
-                                        if (rslastlink.next()){
-                                            catrankInt = rslastlink.getInt("cat_rank");
-                                            subcatrankInt = rslastlink.getInt("sub_cat_rank");
-                                            linkrankInt = rslastlink.getInt("link_rank");
-                                            //prepare data for new link
-                                            if (rowradio.equals("1")){
-                                                linkrankInt++;
-                                            }
-                                            else {
-                                                subcatrankInt++;
-                                                linkrankInt = 1;
-                                            }
-                                        }
-                                        else {
-                                            //there are no links in this category yet.  Since they didn't enter new category
-                                            //name in this part of the conditional, they must have chosen "no category"
-                                            //always make the "no category" category have catrank of 0
-                                            catrankInt = 0;
-                                        }
+                                    }
+                                    if (rslastcat.next()){ //if no links yet, this will be false
+                                            catrankInt = rslastcat.getInt("cat_rank") + 1;
+                                    }
 
+                                    //add the link
+                                    Statement stat14 = null;
 
-                                        //Add the link to the table, insert new row
-                                        Statement stat16 = null;
-                                        String addLink = "INSERT INTO user_links (user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) VALUES ("+user_id+", '"+linknamenew+"','"+linkurlnew+"','"+catnew+"',"+catrankInt+","+subcatrankInt+","+linkrankInt+")";
-                                        try {
-                                            stat16 = conn.createStatement();
-                                            stat16.executeUpdate(addLink);
-                                        }
-                                        catch (Exception e) {
+                                    String addLink = "INSERT INTO user_links (user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) VALUES ("+user_id+", '"+linknamenew+"','"+linkurlnew+"','"+catnew+"',"+catrankInt+","+subcatrankInt+","+linkrankInt+")";
+                                    //String addLink = "INSERT INTO "+user+" VALUES ('"+linknamenew+"','"+linkurlnew+"','"+catnew+"',"+catrankInt+","+subcatrankInt+","+linkrankInt+")";
+                                    try {
+                                            stat14 = conn.createStatement();
+                                            stat14.executeUpdate(addLink);
+                                    }
+                                    catch (Exception e) {
                                             out.print("Unable to make connection to production database");
                                             out.print(e);
-                                        }
-
-                                        rslastlink.close();
                                     }
-                                } //end if (rowradio.equals("1") || rowradio.equals("2"))
 
-                                else if (rowradio.equals("3")){
-                                    //they want to add the link to a specific row
+                                    rslastcat.close();
 
-                                    if (fromstate.equals("3a") || fromstate.equals("3a_1")){
-                                            //just came from 1st add link state so haven't chosen row yet, send them there
-                                            state = "3a_2";
-                                    }
-                                    else {
-                                            //row is chosen, finish operations to add link to end of specified row.
-                                            //linknamenew, linknameurl are still being passed to here
-                                            //the category name is catradio, and the subcategory we need to add the link to
-                                            //is identified by subcatrank, and catrank is passed as catrank
-
-                                            //now need to take that subcatrank and category (catradio or catnew) and get the linkrank
-                                            //of the last link in that subcategory, then add this link after it (linkrank+1)
-                                            Statement stat17 = null;
-                                            ResultSet rslastlinkofsubcat = null;
-                                            String lastLinkOfSubcat = "SELECT MAX(link_rank) AS lastLinkRankInRow FROM user_links WHERE user_id = "+user_id+" AND cat = '"+catnew+"' AND sub_cat_rank = "+subcatrank;
-                                            //String lastLinkOfSubcat = "SELECT MAX(linkrank) FROM user_links WHERE user_id = "+user_id+" AND cat = '"+catnew+"' AND sub_cat_rank = "+subcatrank;
-                                            try {
-                                                    stat17 = conn.createStatement();
-                                                    rslastlinkofsubcat = stat17.executeQuery(lastLinkOfSubcat);
-                                            }
-                                            catch (Exception e) {
-                                                    out.print("Unable to make connection to production database");
-                                                    out.print(e);
-                                            }
-                                            int linkRankInt = 0;
-                                            if (rslastlinkofsubcat.next()){
-                                                    linkRankInt = rslastlinkofsubcat.getInt("lastLinkRankInRow");
-                                            }
-
-                                            //now add the new link
-                                            linkRankInt++; //one after the last link in the subcategory
-                                            Statement stat18 = null;
-                                            String addLinkToSubcat = "INSERT INTO user_links (user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) VALUES ("+user_id+", '"+linknamenew+"','"+linkurlnew+"','"+catnew+"',"+catrank+","+subcatrank+","+linkRankInt+")";
-                                            //String addLinkToSubcat = "INSERT INTO "+user+" VALUES ('"+linknamenew+"','"+linkurlnew+"','"+catnew+"',"+catrank+","+subcatrank+","+linkRankInt+")";
-                                            try {
-                                                    stat18 = conn.createStatement();
-                                                    stat18.executeUpdate(addLinkToSubcat);
-                                            }
-                                            catch (Exception e) {
-                                                    out.print("Unable to make connection to production database");
-                                                    out.print(e);
-                                            }
-                                            rslastlinkofsubcat.close();
-                                    }
                                 }
+                                else {
+                                    //they chose existing category name, or no category
 
+                                    //lastLink query gets the catrank, subcatrank, and linkrank from the last link in the category
+                                    //  eg. that with the greatest linkrank in the set of the greatest subcatrank
+                                    //initial FROM statement returns a table of info from the links in last subcategory of the category specified
+                                    //nested tables in the main WHERE statement identify the highest linkrank in the highest subcategory of the category specified
+                                    //
+                                    //formatted:	SELECT One.catrank, One.subcatrank, One.linkrank
+                                    //				FROM 	(SELECT Two.catrank, Two.subcatrank, Two.linkrank
+                                    //						 FROM etable Two
+                                    //						 WHERE Two.subcatrank = (SELECT MAX(subcatrank)
+                                    //												 FROM etable
+                                    //												 WHERE cat = 'Reference')
+                                    //								&& cat = 'Reference')
+                                    //				AS One
+                                    //				WHERE One.linkrank = (SELECT MAX(linkrank)
+                                    //									  FROM etable
+                                    //									  WHERE subcatrank = (SELECT MAX(subcatrank)
+                                    //														  FROM etable
+                                    //														  WHERE cat = 'Reference')
+                                    //											&& cat = 'Reference')
+
+
+
+
+                                    //String lastLink = "SELECT One.catrank, One.subcatrank, One.linkrank FROM (SELECT Two.catrank, Two.subcatrank, Two.linkrank FROM "+user+" Two WHERE Two.subcatrank = (SELECT MAX(subcatrank) FROM "+user+" WHERE cat = '"+catnew+"') && Two.cat = '"+catnew+"') AS One WHERE One.linkrank = (SELECT MAX(linkrank) FROM "+user+" WHERE subcatrank = (SELECT MAX(subcatrank) FROM "+user+" WHERE cat = '"+catnew+"') && cat = '"+catnew+"')";
+
+                                    //with this new lastLink query, the first result is the data from the last link in the category given (even if blank)
+                                    String lastLink = "SELECT cat, cat_rank, sub_cat_rank, link_rank FROM user_links WHERE user_id = "+user_id+" AND cat = '"+catnew+"' ORDER BY sub_cat_rank DESC, link_rank DESC";
+                                    Statement stat15 = null;
+                                    ResultSet rslastlink = null;
+                                    try {
+                                        stat15 = conn.createStatement();
+                                        rslastlink = stat15.executeQuery(lastLink);
+                                    }
+                                    catch (Exception e) {
+                                        out.print("Unable to make connection to production database");
+                                        out.print(e);
+                                    }
+                                    if (rslastlink.next()){
+                                        catrankInt = rslastlink.getInt("cat_rank");
+                                        subcatrankInt = rslastlink.getInt("sub_cat_rank");
+                                        linkrankInt = rslastlink.getInt("link_rank");
+                                        //prepare data for new link
+                                        linkrankInt++;
+                                    }
+                                    else {
+                                        //there are no links in this category yet.  Since they didn't enter new category
+                                        //name in this part of the conditional, they must have chosen "no category"
+                                        //always make the "no category" category have catrank of 0
+                                        catrankInt = 0;
+                                    }
+
+
+                                    //Add the link to the table, insert new row
+                                    Statement stat16 = null;
+                                    String addLink = "INSERT INTO user_links (user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) VALUES ("+user_id+", '"+linknamenew+"','"+linkurlnew+"','"+catnew+"',"+catrankInt+","+subcatrankInt+","+linkrankInt+")";
+                                    try {
+                                        stat16 = conn.createStatement();
+                                        stat16.executeUpdate(addLink);
+                                    }
+                                    catch (Exception e) {
+                                        out.print("Unable to make connection to production database");
+                                        out.print(e);
+                                    }
+
+                                    rslastlink.close();
+                                }
+                                
+                                
                                 //		**ADMIN UPDATE**
                                 helperMethods.adminUpdate(username, "edit Add");
 
@@ -1287,11 +1231,9 @@ else {
 
 
                     /*
-                    state 3a - they chose Add a link option.  Has form for user to enter linkname, link url, category,
-                    and row option.  Existing categories are shown among the choices, also the default "no category"
-                    and user can input new category.  The row option determines which row the link will go into in that category,
-                    the default is add the new link to very end category. The other row options are to add link to a new row
-                    and add to a specific row (which requires another step). They do not enter linkrank, if they want to
+                    state 3a - they chose Add a link option.  Has form for user to enter linkname, link url, category.  
+                    Existing categories are shown among the choices, also the default "no category"
+                    and user can input new category. They do not enter linkrank, if they want to
                     add a link in between other links they will have to use the Move a link. */
                     else if (state.equals("3a")){
 
@@ -1380,7 +1322,7 @@ else {
 
 
             }
-            else{//incorrect password
+            else{ //incorrect password
                     state = "1"; //make them re-enter password
             }
 		
@@ -1399,1108 +1341,885 @@ else {
             <%
 	}
 	else {
-		
-		fromstate = state; //assign fromstate for next time
-		
-		/*/////////////////////////////////////////////////////////////////
-		Outer table code, 2 cells, jumpstation and yellow edit column   */
-		%>
-		<table cellpadding=0 cellspacing=0 border=0 width=100% style="height: 100%;">
-                    <tr>
-                        <td valign=top>
-                <%
-		
-		
-		/*////////////////////////////////////////////////////////////////
-		Jumpstation Code
-		Regular jumpstation code will go below everything since changes to table are made in state 2 and should also be
-		displayed in state 2.  There will be conditionals within the jumpstation code altering the links based on the
-		state.  EX: If they are at the state 3m_1, to choose where to move a link, the actual links won't be links, just
-		plain text and there will be markers between them and before and after them that will be hot links.  They will
-		pass information.
-		*/
-		%>
-		
-		<!-- Start Page Header (top table) ----------------------------------------->
-		<table cellpadding=0 cellspacing=0 border=0 width=100% >
-		<tr valign=top>
-		<td align=left valign=top>
-		
-		<%	
-		//Connection and Operations on database
-		
-		Statement stat1 = null;
-		Statement stat2 = null;
-		ResultSet rs = null;
-		ResultSet rsuserdata = null;
-			
-		String linksQuery = "SELECT user_link_id, link_name, link_address, cat, sub_cat_rank, link_rank "
-                        + "FROM user_links WHERE user_id = "+user_id+" "
-                        + "ORDER BY cat_rank, sub_cat_rank, link_rank";
-                
-		String userDataQuery = "SELECT searchOption, searchUrl, searchLang FROM users WHERE user_id = "+user_id;
 
-                int currLinkId = 0;
-		int linkCounter;
-		int catCounter;
-		String currCat = "";
-		int currSubCatRank = 0;
-		String lastCat = "";
-		int searchFlag = 0;
-                String searchSuffix2 = "";
-		String placeholder = "|||";
-		int moveFlag = 0;
-		String moveColor="red";
-				
-		//execute SQL queries
-		try {					
-			stat2 = conn.createStatement();
-			rs = stat2.executeQuery(linksQuery);	
-			stat1 = conn.createStatement();
-			rsuserdata = stat1.executeQuery(userDataQuery);//gets matching user(s) already in table		
-		}
-		catch (Exception e) {//if query doesn't work, user probably doesn't exist
-			%><center><font size=4 color=red>The username you have entered isn't a valid user</font><p>
-			<a href="index.jsp"><font color=blue>Go back</font></a></center><p><br><br><br><br><br><br><br><br><br><%
-			out.print("Unable to make connection to production database");
-			out.print(e);
-		}
-		%>
-		
-		
-		
-		<!-- Show current date and time -->
-		<!--<%= new java.util.Date() %>	-->
-			
-		
-		
-		</td><%
-		
-		if (rsuserdata.next()){
-                    //Search check, flag is
-                    //	0 for no search
-                    // 	1 for ngumbi branded google search (default)
-                    //	2 for regular google search
-                    //	3 for ngumbi branded safe google search
-                    //	10 for yahoo search
-                    searchFlag = rsuserdata.getInt("searchOption");
-                    searchUrl = rsuserdata.getString("searchUrl");
+            fromstate = state; //assign fromstate for next time
 
-                    if (searchFlag == 0){
-                        //no search
-                    }
-                    else if (searchFlag == 1 || searchFlag == 2 || searchFlag == 3){
-                        //we have some form of google search
-                        if (searchFlag == 1)
-                            searchSuffix2 = "custom";//google.com, ngumbi branded
-                        else if (searchFlag == 2)
-                            searchSuffix2 = "search";//google.com, regular
-                        else if (searchFlag == 3)
-                            searchSuffix2 = "custom";//google.com, safesearch - same as first, but do a check later for the specific safesearch bit
+            /*/////////////////////////////////////////////////////////////////
+            Outer table code, 2 cells, jumpstation and yellow edit column   */
+            %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
+                <tr>
+                    <td valign="top">
+            <%
 
-                        //we have some form of google search
+
+            /*////////////////////////////////////////////////////////////////
+            Jumpstation Code
+            Regular jumpstation code will go below everything since changes to table are made in state 2 and should also be
+            displayed in state 2.  There will be conditionals within the jumpstation code altering the links based on the
+            state.  EX: If they are at the state 3m_1, to choose where to move a link, the actual links won't be links, just
+            plain text and there will be markers between them and before and after them that will be hot links.  They will
+            pass information.
+            */
+            %>
+
+            <!-- Start Page Header (top table) ----------------------------------------->
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" >
+            <tr valign="top">
+            <td align="left" valign="top">
+
+            <%	
+            //Connection and Operations on database
+
+            Statement stat1 = null;
+            Statement stat2 = null;
+            ResultSet rs = null;
+            ResultSet rsuserdata = null;
+
+            String linksQuery = "SELECT user_link_id, link_name, link_address, cat, sub_cat_rank, link_rank "
+                    + "FROM user_links WHERE user_id = "+user_id+" "
+                    + "ORDER BY cat_rank, sub_cat_rank, link_rank";
+
+            String userDataQuery = "SELECT searchOption, searchUrl, searchLang FROM users WHERE user_id = "+user_id;
+
+            int currLinkId = 0;
+            int linkCounter;
+            int catCounter;
+            String currCat = "";
+            int currSubCatRank = 0;
+            String lastCat = "";
+            int searchFlag = 0;
+            String searchSuffix2 = "";
+            String placeholder = "|||";
+            int moveFlag = 0;
+            String moveColor="red";
+
+            //execute SQL queries
+            try {					
+                    stat2 = conn.createStatement();
+                    rs = stat2.executeQuery(linksQuery);	
+                    stat1 = conn.createStatement();
+                    rsuserdata = stat1.executeQuery(userDataQuery);//gets matching user(s) already in table		
+            }
+            catch (Exception e) {//if query doesn't work, user probably doesn't exist
+                    %><center><font size=4 color=red>The username you have entered isn't a valid user</font><p>
+                    <a href="index.jsp"><font color=blue>Go back</font></a></center><p><br><br><br><br><br><br><br><br><br><%
+                    out.print("Unable to make connection to production database");
+                    out.print(e);
+            }
+            %>
+
+
+
+            <!-- Show current date and time -->
+            <!--<%= new java.util.Date() %>	-->
+
+
+
+            </td><%
+
+            if (rsuserdata.next()){
+                //Search check, flag is
+                //	0 for no search
+                // 	1 for ngumbi branded google search (default)
+                //	2 for regular google search
+                //	3 for ngumbi branded safe google search
+                //	10 for yahoo search
+                searchFlag = rsuserdata.getInt("searchOption");
+                searchUrl = rsuserdata.getString("searchUrl");
+
+                if (searchFlag == 0){
+                    //no search
+                }
+                else if (searchFlag == 1 || searchFlag == 2 || searchFlag == 3){
+                    //we have some form of google search
+                    if (searchFlag == 1)
+                        searchSuffix2 = "custom";//google.com, ngumbi branded
+                    else if (searchFlag == 2)
+                        searchSuffix2 = "search";//google.com, regular
+                    else if (searchFlag == 3)
+                        searchSuffix2 = "custom";//google.com, safesearch - same as first, but do a check later for the specific safesearch bit
+
+                    //we have some form of google search
+                    %>
+                    <td style="text-align: center;">
+
+                        <!-- Search Google -->
+                        <form name="search_form" action="http://<%=searchUrl%>/<%=searchSuffix2%>" id="cse-search-box">
+                          <div>
+                            <a href="http://<%=searchUrl%>/" style="text-decoration: none;">
+                                <img src="http://www.google.com/logos/Logo_40wht.gif" border="0" alt="Google" align="middle">
+                            </a>
+                            <input type="hidden" name="cx" value="partner-pub-8335750690638492:0017612265" />
+                            <input type="hidden" name="ie" value="UTF-8" />
+                            <%
+                            if (searchFlag == 3){//google safe search
+                                %><input type="hidden" name="safe" value="active"/><%
+                            }
+                            %>
+                            <input type="hidden" name="safe" value="active"/>
+                            <input type="hidden" name="hl" value="<%=searchLang%>">
+                            <input type="text" name="q" size="31" />
+                          </div>
+                        </form>
+                        <!-- end Search Google -->
+
+                    </td>
+                    <%
+
+                } //end 1,2,3 google search
+
+                else if (searchFlag == 10){
+                        //yahoo search
                         %>
-                        <td style="text-align: center;">
-                            
-                            <!-- Search Google -->
-                            <form name="search_form" action="http://<%=searchUrl%>/<%=searchSuffix2%>" id="cse-search-box">
-                              <div>
-                                <a href="http://<%=searchUrl%>/" style="text-decoration: none;">
-                                    <img src="http://www.google.com/logos/Logo_40wht.gif" border="0" alt="Google" align="middle">
-                                </a>
-                                <input type="hidden" name="cx" value="partner-pub-8335750690638492:0017612265" />
-                                <input type="hidden" name="ie" value="UTF-8" />
-                                <%
-                                if (searchFlag == 3){//google safe search
-                                    %><input type="hidden" name="safe" value="active"/><%
-                                }
-                                %>
-                                <input type="hidden" name="safe" value="active"/>
-                                <input type="hidden" name="hl" value="<%=searchLang%>">
-                                <input type="text" name="q" size="31" />
-                              </div>
-                            </form>
-                            <!-- end Search Google -->
-
+                        <td>
+                        <center>
+                        <!-- Yahoo! Search -->
+                        <form method="get" action="http://<%=searchUrl%>/search" style="padding: 5px; width:360px; text-align:center; margin-top: 15px; margin-bottom: 25px;">
+                        <a href="http://<%=searchUrl%>/">
+                        <img src="http://us.i1.yimg.com/us.yimg.com/i/us/search/ysan/ysanlogo.gif" alt="yahoo" align="absmiddle" border="0"></a>&nbsp;<input type="text" name="p" size=25>&nbsp;<input type="hidden" name="fr" value="yscpb">&nbsp;<input type="submit" value="Search">
+                        </form>
+                        </center>
+                        <!-- End Yahoo! Search -->
                         </td>
                         <%
-				
-                    } //end 1,2,3 google search
+                } //end yahoo search
 
-                    else if (searchFlag == 10){
-                            //yahoo search
-                            %>
-                            <td>
-                            <center>
-                            <!-- Yahoo! Search -->
-                            <form method=get action="http://<%=searchUrl%>/search" style="padding: 5px; width:360px; text-align:center; margin-top: 15px; margin-bottom: 25px;">
-                            <a href="http://<%=searchUrl%>/">
-                            <img src="http://us.i1.yimg.com/us.yimg.com/i/us/search/ysan/ysanlogo.gif" alt="yahoo" align="absmiddle" border=0></a>&nbsp;<input type="text" name="p" size=25>&nbsp;<input type="hidden" name="fr" value="yscpb">&nbsp;<input type="submit" value="Search">
-                            </form>
-                            </center>
-                            <!-- End Yahoo! Search -->
-                            </td>
-                            <%
-                    } //end yahoo search
-			
-		} //end 		if (rsuserdata.next()){
-		
-		%>
-                <td align=right valign=top>
-		</td>
-		</tr>
-		</table>
-		<!-- End Start Page Header (top table) ----------------------------------------->
-		
-		
-		
-		<!--- start main (dynamic) table-->
-		<center>
-		<table cellpadding="0" cellspacing="8" border="0"><%
-		
-		linkCounter = 0;
-		catCounter = 0;
-		
-		
-		
-		//do the first link
-		if(rs.next()){
-			currLinkId = rs.getInt("user_link_id");
-			currCat = rs.getString("cat");//have to get first table entry to assign tracking variables
-			currSubCatRank = rs.getInt("sub_cat_rank");//of current category and subcategory
-                        
-                        //
-		
-			if( currCat.equals("")){//check if first link is a category-less one
-                            %><!-- start table and print first link centered--><%
-                            %><tr><td valign=top colspan=2><center><font size=-1><%
+            } //end 		if (rsuserdata.next()){
 
-                            if (state.equals("3e") || state.equals("3d") || state.equals("3m")){
-                                //instead of normal links, need to pass the info of which link was clicked.
-                                fromstate = state;
-                                String state2 = "";
-                                if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
-                                else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted
+            %>
+            <td align="right" valign="top">
+            </td>
+            </tr>
+            </table>
+            <!-- End Start Page Header (top table) ----------------------------------------->
 
-                                //here doing some edits for chinese testing, the first link
-                                //the "encoded" one comes out as %E5%95%8A or some such, for a chinese character, but the one in the link below does not
-                                // why not!??? they are both URLEncoded.
-                                //URLEncoder.encode(rsInventoryInStock.getString("return_media_desc"), "UTF-8")
-                                %><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+
+
+            <!--- start main (dynamic) table-->
+            <center>
+            <table cellpadding="0" cellspacing="8" border="0"><%
+
+            linkCounter = 0;
+            catCounter = 0;
+
+
+
+            //do the first link
+            if(rs.next()){
+                    currLinkId = rs.getInt("user_link_id");
+                    currCat = rs.getString("cat");//have to get first table entry to assign tracking variables
+                    currSubCatRank = rs.getInt("sub_cat_rank");//of current category and subcategory
+
+                    //
+
+                    if( currCat.equals("")){//check if first link is a category-less one
+                        %><!-- start table and print first link centered--><%
+                        %><tr><td valign="top" colspan="2"><center><font size="-1"><%
+
+                        if (state.equals("3e") || state.equals("3d") || state.equals("3m")){
+                            //instead of normal links, need to pass the info of which link was clicked.
+                            fromstate = state;
+                            String state2 = "";
+                            if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
+                            else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted
+
+                            //here doing some edits for chinese testing, the first link
+                            //the "encoded" one comes out as %E5%95%8A or some such, for a chinese character, but the one in the link below does not
+                            // why not!??? they are both URLEncoded.
+                            //URLEncoder.encode(rsInventoryInStock.getString("return_media_desc"), "UTF-8")
+                            %><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                        }
+                        else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
+                            if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
+                                    if (moveFlag == 1){
+                                        moveFlag = 0;
+                                        if (rs.getInt("link_rank") == 1){ %><a href="asdf"><%=placeholder%></a>&nbsp;<% } //last link was one picked to move, don't put placeholder
+                                    }
+                                    else { %><a href="asdf"><%=placeholder%></a>&nbsp;<% }
+                            }
+                            else { //link is one that was picked to move, set variable to not write placeholder after it either
+                                    moveFlag = 1;
+                                    %><font color=<%=moveColor%>><%
+                            }
+                            %><%=rs.getString("link_name")%>&nbsp;<%	
+                            //finish font tag for the picked link
+                            if (moveFlag == 1){ %></font><%	}
+                        }
+                        else if (state.equals("3r") || state.equals("3mc")){
+                            //show links as plain text to protect from accidental clicks
+                            %><%=rs.getString("link_name")%> <%
+                        }
+                        else {
+                            //show links as blue underlined text, but not links, to protect from accidental clicks
+                            %><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
+                        }				
+                    }
+
+                    else{ //print first category, then first link
+                            %><tr><td valign="top" width="50%"><strong><%
+
+                            if (state.equals("3r")){ //print category name as a link for user to pick when modifying category
+                                    fromstate = state;
+                                    String state3 = "";
+                                    state3 = state+"_1";
+                                    %><a href="editor.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
+                            }
+                            else { //print category name normally
+                                    %><%=currCat%><%
+                            }						
+
+                            %></strong><br><font size="-1"><%
+
+                            if (state.equals("3e") || state.equals("3d") || state.equals("3m")){ //instead of normal links, need to pass the info of which link was clicked.
+                                    fromstate = state;
+                                    String state2 = "";
+                                    if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
+                                    else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted		
+                                    %><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                             }
                             else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
-                                if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
-                                        if (moveFlag == 1){
-                                            moveFlag = 0;
-                                            if (rs.getInt("link_rank") == 1){ %><a href="asdf"><%=placeholder%></a>&nbsp;<% } //last link was one picked to move, don't put placeholder
-                                        }
-                                        else { %><a href="asdf"><%=placeholder%></a>&nbsp;<% }
-                                }
-                                else { //link is one that was picked to move, set variable to not write placeholder after it either
-                                        moveFlag = 1;
-                                        %><font color=<%=moveColor%>><%
-                                }
-                                %><%=rs.getString("link_name")%>&nbsp;<%	
-                                //finish font tag for the picked link
-                                if (moveFlag == 1){ %></font><%	}
-                            }
-                            else if (state.equals("3r") || state.equals("3mc")){
-                                //show links as plain text to protect from accidental clicks
-                                %><%=rs.getString("link_name")%> <%
-                            }
-                            else {
-                                //show links as blue underlined text, but not links, to protect from accidental clicks
-                                %><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
-                            }				
-			}
-		
-			else{ //print first category, then first link
-				%><tr><td valign=top width="50%"><STRONG><%
-				
-				if (state.equals("3r")){ //print category name as a link for user to pick when modifying category
-					fromstate = state;
-					String state3 = "";
-					state3 = state+"_1";
-					%><a href="editor.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
-				}
-				else { //print category name normally
-					%><%=currCat%><%
-				}						
-				
-				%></STRONG><br><font size=-1><%
-				
-				if (state.equals("3e") || state.equals("3d") || state.equals("3m")){ //instead of normal links, need to pass the info of which link was clicked.
-					fromstate = state;
-					String state2 = "";
-					if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
-					else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted		
-					%><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
-				}
-				else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
-					if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
-						if (moveFlag == 1){
-							moveFlag = 0;
-							if (rs.getInt("link_rank") == 1){ %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% } //last link was one picked to move, don't put placeholder
-						}
-						else { %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% }
-					}
-					else { //link is one that was picked to move, set variable to not write placeholder after it either
-						moveFlag = 1;
-						%><font color=<%=moveColor%>><%
-					}
-					%><%=rs.getString("link_name")%>&nbsp;&nbsp;<%	
-					//finish font tag for the picked link
-					if (moveFlag == 1){ %></font><%	}
-				}
-				else if (state.equals("3r") || state.equals("3mc")){ //show links as plain text to protect from accidental clicks
-					%><%=rs.getString("link_name")%>&nbsp;&nbsp;<%
-				}
-				else { 	//show links as blue underlined text, but not links, to protect from accidental clicks
-					%><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
-				}				
-				
-				catCounter++;
-				lastCat = currCat;
-			}
-			
-			linkCounter++;
-		}
-		
-		// first link is completed, now loop through rest
-		while (rs.next()) {
-                    currLinkId = rs.getInt("user_link_id");
-			
-			if ( !(currCat.equals(rs.getString("cat")))){ //we have a new category so indent accordingly
-				currCat = rs.getString("cat");//set to new category
-				currSubCatRank = rs.getInt("sub_cat_rank");//reset subcategory
-				catCounter++;
-				
-				//code for putting last placeholder on end of row if moving a link (this one for end of category, is another for end of subcat)
-				if (state.equals("3m_1") && moveFlag != 1){
-					%><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<%
-				}					
-				
-				if (((catCounter%2) == 0) && !(lastCat.equals(""))){//we are still in the same row of big table, don't <tr> yet
-					//also, have new category but last category wasn't null, so don't start new line under category-less pool
-					%></font></td><td valign=top width="50%"><STRONG><%
-					if (state.equals("3r")){ //print category name as a link for user to pick when modifying category
-						fromstate = state;
-						String state3 = "";
-						state3 = state+"_1";
-						%><a href="editor.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
-					}
-					else { //print category normally
-						%><%=currCat%><%
-					}
-					
-					%></STRONG><br><font size=-1><%
-					
-					if (state.equals("3e") || state.equals("3d") || state.equals("3m")){ //instead of normal links, need to pass the info of which link was clicked.
-						fromstate = state;
-						String state2 = "";
-						if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
-						else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted		
-						%>
-                                                <a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
-					}
-					else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
-						if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
-							if (moveFlag == 1){
-								moveFlag = 0;
-								if (rs.getInt("link_rank") == 1){ %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% } //last link was one picked to move, but now on new row, put placeholder
-							}
-							else { %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% }
-						}
-						else { //link is one that was picked to move, set variable to not write placeholder after it either, and set special color
-							moveFlag = 1;
-							%><font color=<%=moveColor%>><%
-						}
-						%><%=rs.getString("link_name")%><%
-						//finish font tag for the picked link
-						if (moveFlag == 1){ %></font><%	}
-														
-					}
-					else if (state.equals("3r") || state.equals("3mc")){ //show links as plain text to protect from accidental clicks
-						%><%=rs.getString("link_name")%>&nbsp;&nbsp;<%
-					}
-					else { 	//show links as blue underlined text, but not links, to protect from accidental clicks
-						%><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
-					}				
-				}
-				else { // we jumped to next row of big table, do <tr>
-					%></font></td></tr><tr><td valign=top><STRONG><%
-					if (state.equals("3r")){ //print category name as a link for user to pick when modifying category
-						fromstate = state;
-						String state3 = "";
-						state3 = state+"_1";
-						%><a href="editor.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
-					}
-					else { //print category normally
-						%><%=currCat%><%
-					}
-					%></STRONG><br><font size=-1><%
-					
-					if (state.equals("3e") || state.equals("3d") || state.equals("3m")){ //instead of normal links, need to pass the info of which link was clicked.
-						fromstate = state;
-						String state2 = "";
-						if (state.equals("3e") || state.equals("3m")){
-                                                    state2 = state+"_1";// go to next step within this option (edit or move link)
-                                                }
-						else if (state.equals("3d")){ 
-                                                    state2 = "2"; // go back to state 2, link will be deleted		
-                                                }
-						%><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
-					}
-					else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
-						if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
-							if (moveFlag == 1){
-								moveFlag = 0;
-								if (rs.getInt("link_rank") == 1){ %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% } //last link was one picked to move, don't put placeholder
-							}
-							else { %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% }
-						}
-						else { //link is one that was picked to move, set variable to not write placeholder after it either
-							moveFlag = 1;
-							%><font color=<%=moveColor%>><%
-						}
-						%><%=rs.getString("link_name")%><%	
-						//finish font tag for the picked link
-						if (moveFlag == 1){ %></font><%	}
-					}
-					else if (state.equals("3r") || state.equals("3mc")){ //show links as plain text to protect from accidental clicks
-						%><%=rs.getString("link_name")%>&nbsp;&nbsp;<%
-					}
-					else { 	//show links as blue underlined text, but not links, to protect from accidental clicks
-						%><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
-					}				
-					
-					if (lastCat.equals("")){//we're on 1st new category since the category-less pool
-						//do nothing, already accounted for
-					}
-				}
-			}
-			
-			else{ //we are still in same category (or non-category)
-				if ( currSubCatRank != rs.getInt("sub_cat_rank")){ //we are in a new subcategory, do <br>
-					
-					//code for putting last placeholder on end of row if moving a link
-					if (state.equals("3m_1") && moveFlag != 1){
-						%><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<%
-					}
-					
-					%><br><%
-					
-					if (state.equals("3e") || state.equals("3d") || state.equals("3m")){ //instead of normal links, need to pass the info of which link was clicked.
-						fromstate = state;
-						String state2 = "";
-						if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
-						else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted	
-						%><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
-					}
-					else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
-                                            if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
-                                                if (moveFlag == 1){
+                                    if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
+                                            if (moveFlag == 1){
                                                     moveFlag = 0;
                                                     if (rs.getInt("link_rank") == 1){ %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% } //last link was one picked to move, don't put placeholder
-                                                }
-                                                else {
-                                                    %><a href="asdf"><%=placeholder%></a>&nbsp;<%
-                                                }
+                                            }
+                                            else { %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% }
+                                    }
+                                    else { //link is one that was picked to move, set variable to not write placeholder after it either
+                                            moveFlag = 1;
+                                            %><font color=<%=moveColor%>><%
+                                    }
+                                    %><%=rs.getString("link_name")%>&nbsp;&nbsp;<%	
+                                    //finish font tag for the picked link
+                                    if (moveFlag == 1){ %></font><%	}
+                            }
+                            else if (state.equals("3r") || state.equals("3mc")){ //show links as plain text to protect from accidental clicks
+                                    %><%=rs.getString("link_name")%>&nbsp;&nbsp;<%
+                            }
+                            else { 	//show links as blue underlined text, but not links, to protect from accidental clicks
+                                    %><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
+                            }				
+
+                            catCounter++;
+                            lastCat = currCat;
+                    }
+
+                    linkCounter++;
+            }
+
+            // first link is completed, now loop through rest
+            while (rs.next()) {
+                currLinkId = rs.getInt("user_link_id");
+
+                    if ( !(currCat.equals(rs.getString("cat")))){ //we have a new category so indent accordingly
+                            currCat = rs.getString("cat");//set to new category
+                            currSubCatRank = rs.getInt("sub_cat_rank");//reset subcategory
+                            catCounter++;
+
+                            //code for putting last placeholder on end of row if moving a link (this one for end of category, is another for end of subcat)
+                            if (state.equals("3m_1") && moveFlag != 1){
+                                    %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<%
+                            }					
+
+                            if (((catCounter%2) == 0) && !(lastCat.equals(""))){//we are still in the same row of big table, don't <tr> yet
+                                    //also, have new category but last category wasn't null, so don't start new line under category-less pool
+                                    %></font></td><td valign="top" width="50%"><strong><%
+                                    if (state.equals("3r")){ //print category name as a link for user to pick when modifying category
+                                            fromstate = state;
+                                            String state3 = "";
+                                            state3 = state+"_1";
+                                            %><a href="editor.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
+                                    }
+                                    else { //print category normally
+                                            %><%=currCat%><%
+                                    }
+
+                                    %></strong><br><font size="-1"><%
+
+                                    if (state.equals("3e") || state.equals("3d") || state.equals("3m")){ //instead of normal links, need to pass the info of which link was clicked.
+                                            fromstate = state;
+                                            String state2 = "";
+                                            if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
+                                            else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted		
+                                            %>
+                                            <a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                    }
+                                    else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
+                                            if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
+                                                    if (moveFlag == 1){
+                                                            moveFlag = 0;
+                                                            if (rs.getInt("link_rank") == 1){ %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% } //last link was one picked to move, but now on new row, put placeholder
+                                                    }
+                                                    else { %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% }
+                                            }
+                                            else { //link is one that was picked to move, set variable to not write placeholder after it either, and set special color
+                                                    moveFlag = 1;
+                                                    %><font color=<%=moveColor%>><%
+                                            }
+                                            %><%=rs.getString("link_name")%><%
+                                            //finish font tag for the picked link
+                                            if (moveFlag == 1){ %></font><%	}
+
+                                    }
+                                    else if (state.equals("3r") || state.equals("3mc")){ //show links as plain text to protect from accidental clicks
+                                            %><%=rs.getString("link_name")%>&nbsp;&nbsp;<%
+                                    }
+                                    else { 	//show links as blue underlined text, but not links, to protect from accidental clicks
+                                            %><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
+                                    }				
+                            }
+                            else { // we jumped to next row of big table, do <tr>
+                                    %></font></td></tr><tr><td valign="top"><strong><%
+                                    if (state.equals("3r")){ //print category name as a link for user to pick when modifying category
+                                            fromstate = state;
+                                            String state3 = "";
+                                            state3 = state+"_1";
+                                            %><a href="editor.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
+                                    }
+                                    else { //print category normally
+                                            %><%=currCat%><%
+                                    }
+                                    %></strong><br><font size="-1"><%
+
+                                    if (state.equals("3e") || state.equals("3d") || state.equals("3m")){ //instead of normal links, need to pass the info of which link was clicked.
+                                            fromstate = state;
+                                            String state2 = "";
+                                            if (state.equals("3e") || state.equals("3m")){
+                                                state2 = state+"_1";// go to next step within this option (edit or move link)
+                                            }
+                                            else if (state.equals("3d")){ 
+                                                state2 = "2"; // go back to state 2, link will be deleted		
+                                            }
+                                            %><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                    }
+                                    else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
+                                            if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
+                                                    if (moveFlag == 1){
+                                                            moveFlag = 0;
+                                                            if (rs.getInt("link_rank") == 1){ %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% } //last link was one picked to move, don't put placeholder
+                                                    }
+                                                    else { %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% }
                                             }
                                             else { //link is one that was picked to move, set variable to not write placeholder after it either
-                                                moveFlag = 1;
-                                                %><font color=<%=moveColor%>><%
+                                                    moveFlag = 1;
+                                                    %><font color=<%=moveColor%>><%
                                             }
                                             %><%=rs.getString("link_name")%><%	
                                             //finish font tag for the picked link
-                                            if (moveFlag == 1){ 
-                                                %></font><%
+                                            if (moveFlag == 1){ %></font><%	}
+                                    }
+                                    else if (state.equals("3r") || state.equals("3mc")){ //show links as plain text to protect from accidental clicks
+                                            %><%=rs.getString("link_name")%>&nbsp;&nbsp;<%
+                                    }
+                                    else { 	//show links as blue underlined text, but not links, to protect from accidental clicks
+                                            %><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
+                                    }				
+
+                                    if (lastCat.equals("")){//we're on 1st new category since the category-less pool
+                                            //do nothing, already accounted for
+                                    }
+                            }
+                    }
+
+                    else{ //we are still in same category (or non-category)
+                            if ( currSubCatRank != rs.getInt("sub_cat_rank")){ //we are in a new subcategory, do <br>
+
+                                    //code for putting last placeholder on end of row if moving a link
+                                    if (state.equals("3m_1") && moveFlag != 1){
+                                            %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<%
+                                    }
+
+                                    %><br><%
+
+                                    if (state.equals("3e") || state.equals("3d") || state.equals("3m")){ //instead of normal links, need to pass the info of which link was clicked.
+                                            fromstate = state;
+                                            String state2 = "";
+                                            if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
+                                            else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted	
+                                            %><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                    }
+                                    else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
+                                        if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
+                                            if (moveFlag == 1){
+                                                moveFlag = 0;
+                                                if (rs.getInt("link_rank") == 1){ %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% } //last link was one picked to move, don't put placeholder
                                             }
-					}
-					else if (state.equals("3r") || state.equals("3mc")){ //show links as plain text to protect from accidental clicks
-						%><%=rs.getString("link_name")%>&nbsp;&nbsp;<%
-					}
-					else { 	//show links as blue underlined text, but not links, to protect from accidental clicks
-						%><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
-					}				
-					currSubCatRank = rs.getInt("sub_cat_rank");//set subcategory	
-				}
-				else{//we are in same category and subcategory  
-					if (state.equals("3e") || state.equals("3d") || state.equals("3m")){ //instead of normal links, need to pass the info of which link was clicked.
-						fromstate = state;
-						String state2 = "";
-						if (state.equals("3e") || state.equals("3m")){ 
-                                                    state2 = state+"_1";//go to next step within this option (edit or move link)
-                                                }
-						else if (state.equals("3d")){ 
-                                                    state2 = "2";//go back to state 2, link will be deleted	
-                                                }		
-						%><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
-					}
-					else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
-						if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
-							if (moveFlag == 1){
-								moveFlag = 0;
-								if (rs.getInt("link_rank") == 1){
-                                                                    %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<%
-                                                                } //last link was one picked to move, don't put placeholder
-							}
-							else { %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% }
-						}
-						else { //link is one that was picked to move, set variable to not write placeholder after it either
-							moveFlag = 1;
-							%><font color=<%=moveColor%>><%
-						}
-						%><%=rs.getString("link_name")%><%	
-						//finish font tag for the picked link
-						if (moveFlag == 1){ %></font><%	}
-					}
-					else if (state.equals("3r") || state.equals("3mc")){ //show links as plain text to protect from accidental clicks
-						%><%=rs.getString("link_name")%>&nbsp;&nbsp;<%
-					}
-					else { 	//show links as blue underlined text, but not links, to protect from accidental clicks
-						%><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
-					}				
-				}	
-			}
-			
-			lastCat = currCat;
-			linkCounter++;
-		%>
-		<% 	
-		} 	
-		//by keeping this last } in separate java area, it keeps the html for the links from being all on the same line
-		//when it was all on the same line, the table wasn't spacing properly in IE, it wouldn't shrink very far because
-		//the links wouldn't spill over to the next line and the 2 columns weren't spacing 50%
-			
-		rs.close();
-		%>
-		
-		</table>
-		<!--- End main table-->
-		
-		</center>
-		
-		<!-- list total links and categories -->
-		<p style="text-align: center; font-size: .8em;">
-                    Displaying&nbsp;<b><%=linkCounter%></b>&nbsp;links in&nbsp;<b><%=catCounter%></b>&nbsp;categories
-                    <br>
-                    <a href="index.jsp">ngumbi</a>
-                </p>
-		
-		<!-- check mysql to display last update of DB time -->
-		
-		<%
-		/////////////////////////////////////////////////////////////////
-		//back to big table with two cells
-		%>
-		</td>
-		
-		<%
-		/////////////////////////////////////////////////////////////////
-		// code for yellow editor column begins here
-		%>
-		<td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
-                    <%
-		
-		
-		//state 1, display password dialog
-		if (state.equals("1")){
-                    %>
-                    <form name="edit_login" method="post" action="editor.jsp">
-                        <p style="text-align: left; padding: 0px 7px;">
-                            Username: <b><%=username%></b>
-                        </p>
-                        <p style="text-align: left; padding: 0px 7px;">
-                            Password: <input type=password name="pass" size="13" maxlength=30>
-                        </p>
-                        <input type=hidden name=user value="<%=username%>" >
-                        <input type=hidden name=state value="2" >
-                        <input type=hidden name=fromstate value="<%=fromstate%>" >
-                        <div style="text-align: center; margin-top: 20px;">
-                            <input type="submit" value="Submit">
-                        </div>
-                    </form>
+                                            else {
+                                                %><a href="asdf"><%=placeholder%></a>&nbsp;<%
+                                            }
+                                        }
+                                        else { //link is one that was picked to move, set variable to not write placeholder after it either
+                                            moveFlag = 1;
+                                            %><font color=<%=moveColor%>><%
+                                        }
+                                        %><%=rs.getString("link_name")%><%	
+                                        //finish font tag for the picked link
+                                        if (moveFlag == 1){ 
+                                            %></font><%
+                                        }
+                                    }
+                                    else if (state.equals("3r") || state.equals("3mc")){ //show links as plain text to protect from accidental clicks
+                                            %><%=rs.getString("link_name")%>&nbsp;&nbsp;<%
+                                    }
+                                    else { 	//show links as blue underlined text, but not links, to protect from accidental clicks
+                                            %><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
+                                    }				
+                                    currSubCatRank = rs.getInt("sub_cat_rank");//set subcategory	
+                            }
+                            else{//we are in same category and subcategory  
+                                    if (state.equals("3e") || state.equals("3d") || state.equals("3m")){ //instead of normal links, need to pass the info of which link was clicked.
+                                            fromstate = state;
+                                            String state2 = "";
+                                            if (state.equals("3e") || state.equals("3m")){ 
+                                                state2 = state+"_1";//go to next step within this option (edit or move link)
+                                            }
+                                            else if (state.equals("3d")){ 
+                                                state2 = "2";//go back to state 2, link will be deleted	
+                                            }		
+                                            %><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                    }
+                                    else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
+                                            if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
+                                                    if (moveFlag == 1){
+                                                            moveFlag = 0;
+                                                            if (rs.getInt("link_rank") == 1){
+                                                                %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<%
+                                                            } //last link was one picked to move, don't put placeholder
+                                                    }
+                                                    else { %><a href="asdf"><%=placeholder%></a>&nbsp;&nbsp;<% }
+                                            }
+                                            else { //link is one that was picked to move, set variable to not write placeholder after it either
+                                                    moveFlag = 1;
+                                                    %><font color=<%=moveColor%>><%
+                                            }
+                                            %><%=rs.getString("link_name")%><%	
+                                            //finish font tag for the picked link
+                                            if (moveFlag == 1){ %></font><%	}
+                                    }
+                                    else if (state.equals("3r") || state.equals("3mc")){ //show links as plain text to protect from accidental clicks
+                                            %><%=rs.getString("link_name")%>&nbsp;&nbsp;<%
+                                    }
+                                    else { 	//show links as blue underlined text, but not links, to protect from accidental clicks
+                                            %><font color=<%=linkColor%>><u><%=rs.getString("link_name")%></u></font>&nbsp;&nbsp;<%
+                                    }				
+                            }	
+                    }
 
-                    <p style="text-align: center; padding: 30px 7px;">
-                        <a href="user/<%=username%>">Cancel</a>
+                    lastCat = currCat;
+                    linkCounter++;
+            %>
+            <% 	
+            } 	
+            //by keeping this last } in separate java area, it keeps the html for the links from being all on the same line
+            //when it was all on the same line, the table wasn't spacing properly in IE, it wouldn't shrink very far because
+            //the links wouldn't spill over to the next line and the 2 columns weren't spacing 50%
+
+            rs.close();
+            %>
+
+            </table>
+            <!--- End main table-->
+
+            </center>
+
+            <!-- list total links and categories -->
+            <p style="text-align: center; font-size: .8em;">
+                Displaying&nbsp;<b><%=linkCounter%></b>&nbsp;links in&nbsp;<b><%=catCounter%></b>&nbsp;categories
+                <br>
+                <a href="index.jsp">ngumbi</a>
+            </p>
+
+            <!-- check mysql to display last update of DB time -->
+
+            <%
+            /////////////////////////////////////////////////////////////////
+            //back to big table with two cells
+            %>
+            </td>
+
+            <%
+            /////////////////////////////////////////////////////////////////
+            // code for yellow editor column begins here
+            %>
+            <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+                <%
+
+
+            //state 1, display password dialog
+            if (state.equals("1")){
+                %>
+                <form name="edit_login" method="post" action="editor.jsp">
+                    <p style="text-align: left; padding: 0px 7px;">
+                        Username: <b><%=username%></b>
                     </p>
-
-                    <!--set focus in javascript-->
-                    <script type="text/javascript"><!--
-                        document.edit_login.pass.focus();
-                    //--></script>
-                    <%
-		}
-		
-		//state 2, display main edit options
-		else if (state.equals("2")){
-                    %>
-                    <div style="text-align: center;">
-                        <a href="editor.jsp?user=<%=username%>&state=3a&fromstate=<%=fromstate%>" >Add a link</a><br>
-                        <a href="editor.jsp?user=<%=username%>&state=3e&fromstate=<%=fromstate%>" >Edit a link</a><br>
-                        <!--<a href="editor.jsp?user=<%=username%>&state=3m&fromstate=<%=fromstate%>" >Move a link</a><br>-->
-                        <a href="editor.jsp?user=<%=username%>&state=3d&fromstate=<%=fromstate%>" >Delete a link</a><br>
-                        <!--Move a group<br>-->
-                        <a href="editor.jsp?user=<%=username%>&state=3r&fromstate=<%=fromstate%>" >Rename a category</a>
-                        <br>
-                        <br>
-                        <a href="editor.jsp?user=<%=username%>&state=3o&fromstate=<%=fromstate%>" >More options</a>
-                        <br><br><br>
-                        <a href="user/<%=username%>">Exit</a>
+                    <p style="text-align: left; padding: 0px 7px;">
+                        Password: <input type="password" name="pass" size="13" maxlength="30">
+                    </p>
+                    <input type="hidden" name="user" value="<%=username%>" >
+                    <input type="hidden" name="state" value="2" >
+                    <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+                    <div style="text-align: center; margin-top: 20px;">
+                        <input type="submit" value="Submit">
                     </div>
+                </form>
+
+                <p style="text-align: center; padding: 30px 7px;">
+                    <a href="user/<%=username%>">Cancel</a>
+                </p>
+
+                <!--set focus in javascript-->
+                <script type="text/javascript"><!--
+                    document.edit_login.pass.focus();
+                //--></script>
+                <%
+            }
+
+            //state 2, display main edit options
+            else if (state.equals("2")){
+                %>
+                <div style="text-align: center;">
+                    <a href="editor.jsp?user=<%=username%>&state=3a&fromstate=<%=fromstate%>" >Add a link</a><br>
+                    <a href="editor.jsp?user=<%=username%>&state=3e&fromstate=<%=fromstate%>" >Edit a link</a><br>
+                    <!--<a href="editor.jsp?user=<%=username%>&state=3m&fromstate=<%=fromstate%>" >Move a link</a><br>-->
+                    <a href="editor.jsp?user=<%=username%>&state=3d&fromstate=<%=fromstate%>" >Delete a link</a><br>
+                    <!--Move a group<br>-->
+                    <a href="editor.jsp?user=<%=username%>&state=3r&fromstate=<%=fromstate%>" >Rename a category</a>
+                    <br>
+                    <br>
+                    <a href="editor.jsp?user=<%=username%>&state=3o&fromstate=<%=fromstate%>" >More options</a>
+                    <br><br><br>
+                    <a href="user/<%=username%>">Exit</a>
+                </div>
+                <%
+            }
+
+            //state 3o, display 'more options', non-basic options
+            else if (state.equals("3o")){
+                %>
+                <div style="text-align: center;">
+                    <a href="editor.jsp?user=<%=username%>&state=3g&fromstate=<%=fromstate%>" >Change search option</a>
+                    <br><br><br>
+                    <a href="editor.jsp?user=<%=username%>&state=3p&fromstate=<%=fromstate%>" >Change password</a>
+                    <br><br>
+                    <a href="editor.jsp?user=<%=username%>&state=3dj&fromstate=<%=fromstate%>" >Delete my account</a>
+                    <br><br><br>
+                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Back to main options</a>
+                    <br><br>
+                    <a href="user/<%=username%>">Exit</a>
+                </div>
+                <%
+            }
+
+            //state 3a, display add a link dialog and form
+            else if (state.equals("3a") || state.equals("3a_1")){
+
+                if (state.equals("3a_1")){
+                    //adding link was unsuccessful
+                    %>
+                    <span style="color: red;">
+                        Unsuccessful. Either you attempted to use invalid characters or
+                        you've hit the max # of links.
+                    </span>
                     <%
-		}
-		
-		//state 3o, display 'more options', non-basic options
-		else if (state.equals("3o")){
+                }
+
+                %>
+                <form name="add" method="post" action="editor.jsp" enctype="application/x-www-form-urlencoded">
+                New link name: <input name=linknamenew SIZE=27 MAXLENGTH=30>
+                <br>
+                New link URL: <input name=linkurlnew SIZE=27 MAXLENGTH=85>
+                <%	//here have radio buttons for each category (and non-category) and a text box for entering a new category name
+                %>
+                <HR size=1 width="66%" align=center>
+                Choose category:
+                <br>
+                <input type="radio" name="catradio" value="" CHECKED>No category<br>
+                <input type="radio" name="catradio" value="null"><input name="catnew" SIZE=22 maxlength=20 value="new category"><br>
+
+                <%//code to find all existing categories and make radio button for each
+                Statement stat100 = null;
+                ResultSet rsallcats = null;
+                String catQuery = "SELECT DISTINCT cat FROM user_links WHERE user_id = "+user_id+" AND cat != ''";
+                try {
+                    stat100 = conn.createStatement();
+                    rsallcats = stat100.executeQuery(catQuery);//gets matching user(s) already in table
+                }
+                catch (Exception e) {
+                    //slight possibility that someone gets here if they hack url and use invalid username
+                    out.print("Unable to make connection to production database");
+                    out.print(e);
+                }
+
+                while (rsallcats.next()){
+                    %><input type="radio" name="catradio" value="<%=rsallcats.getString("cat")%>"><%=rsallcats.getString("cat")%><br><%
+                }
+                rsallcats.close();
+
+
+                //here have radio buttons for the row option, default will be add to end but
+                //there will also be, add new row and add to specific row
+                %>
+
+                <input type="hidden" name="user" value="<%=username%>" >
+                <input type="hidden" name="state" value="2" >
+                <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <input type="submit" value="Submit">
+                </div>
+                </FORM>
+
+                <!--set focus in javascript-->
+                <script type="text/javascript"><!--
+                document.add.linknamenew.focus();
+                //--></script>
+
+
+                <p style="text-align: center; padding: 30px 7px;">
+                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                </p>
+                <%
+            }
+
+
+            //state 3e, display message to click the link to edit
+            else if (state.equals("3e")){
+                %>
+                Click the link on the left that you want to edit
+
+                <p style="text-align: center; padding: 20px 0px;">
+                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                </p>
+                <%
+            }
+
+            //state 3e_1, display text boxes for editing linkname and URL
+            else if (state.equals("3e_1") || state.equals("3e_2")){
+
+
+                //code to find and display the first links mentioned above
+                Statement stat102 = null;
+                ResultSet rsEditLink = null;
+                String getLinkDetails = "SELECT link_name, link_address FROM user_links WHERE user_link_id = "+user_link_id;
+                try {
+                    stat102 = conn.createStatement();
+                    rsEditLink = stat102.executeQuery(getLinkDetails);
+                }
+                catch (Exception e) {
+                    out.print("Unable to make connection to production database");
+                    out.print(e);
+                }
+
+
+                if (rsEditLink.next()){
+                    linkname = rsEditLink.getString("link_name");
+                    linkurl = rsEditLink.getString("link_address");
+                }
+                rsEditLink.close();
+
+
+                if (state.equals("3e_2")){ //has unsuccessful attempt for editing link
                     %>
-                    <div style="text-align: center;">
-                        <a href="editor.jsp?user=<%=username%>&state=3g&fromstate=<%=fromstate%>" >Change search option</a>
-                        <br><br><br>
-                        <a href="editor.jsp?user=<%=username%>&state=3p&fromstate=<%=fromstate%>" >Change password</a>
-                        <br><br>
-                        <a href="editor.jsp?user=<%=username%>&state=3dj&fromstate=<%=fromstate%>" >Delete my account</a>
-                        <br><br><br>
-                        <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Back to main options</a>
-                        <br><br>
-                        <a href="user/<%=username%>">Exit</a>
-                    </div>
+                    <span style="color: red;">
+                        The change was unsuccessful because either the link name or URL you entered
+                        is already in use for another link or you attempted to use invalid characters
+                    </span>
                     <%
-		}
-		
-		//state 3a, display add a link dialog and form
-		else if (state.equals("3a") || state.equals("3a_1")){
+                }
 
-                    if (state.equals("3a_1")){
-                        //adding link was unsuccessful
-                        %>
-                        <span style="color: red;">
-                            Unsuccessful. Either you attempted to use invalid characters or
-                            you've hit the max # of links.
-                        </span>
-                        <%
-                    }
-
-                    %>
-                    <FORM name="add" METHOD="POST" ACTION="editor.jsp" ENCTYPE="application/x-www-form-urlencoded">
-                    New link name: <INPUT name=linknamenew SIZE=27 MAXLENGTH=30>
-                    <br>
-                    New link URL: <INPUT name=linkurlnew SIZE=27 MAXLENGTH=85>
-                    <%	//here have radio buttons for each category (and non-category) and a text box for entering a new category name
-                    %>
-                    <HR size=1 width="66%" align=center>
-                    Choose category:
-                    <br>
-                    <INPUT type="radio" name="catradio" value="" CHECKED>No category<br>
-                    <INPUT type="radio" name="catradio" value="null"><INPUT name="catnew" SIZE=22 MAXLENGTH=20 value="new category"><br>
-
-                    <%//code to find all existing categories and make radio button for each
-                    Statement stat100 = null;
-                    ResultSet rsallcats = null;
-                    String catQuery = "SELECT DISTINCT cat FROM user_links WHERE user_id = "+user_id+" AND cat != ''";
-                    try {
-                        stat100 = conn.createStatement();
-                        rsallcats = stat100.executeQuery(catQuery);//gets matching user(s) already in table
-                    }
-                    catch (Exception e) {
-                        //slight possibility that someone gets here if they hack url and use invalid username
-                        out.print("Unable to make connection to production database");
-                        out.print(e);
-                    }
-
-                    while (rsallcats.next()){
-                        %><INPUT type="radio" name="catradio" value="<%=rsallcats.getString("cat")%>"><%=rsallcats.getString("cat")%><br><%
-                    }
-                    rsallcats.close();
-
-
-                    //here have radio buttons for the row option, default will be add to end but
-                    //there will also be, add new row and add to specific row
-                    %>
-                    <HR size=1 width="66%" align=center>
-                    Row option:
-                    <br>
-                    <INPUT type="radio" name="rowradio" value="1" CHECKED><font color=blue>(Default)</font> Add link to end of this category<br>
-                    <INPUT type="radio" name="rowradio" value="2">Add link to a new row in this category<br>
-                    <INPUT type="radio" name="rowradio" value="3">Add link to a specific row in this category<br>
-
-                    <input type="hidden" name=user value="<%=username%>" >
-                    <input type="hidden" name=state value="2" >
-                    <input type="hidden" name=fromstate value="<%=fromstate%>" >
+                %>
+                <form name="editl" method="GET" action="editor.jsp" enctype="application/x-www-form-urlencoded">
+                    Link name: <input name=linknamenew SIZE=27 MAXLENGTH=30 value="<%=linkname%>" >
+                    <br><br>
+                    Link URL: <input name=linkurlnew SIZE=27 MAXLENGTH=85 value="<%=linkurl%>" >
+                    <input type="hidden" name="user"_link_id value="<%=user_link_id%>" >
+                    <input type="hidden" name="user" value="<%=username%>" >
+                    <input type="hidden" name="state" value="2" >
+                    <input type="hidden" name="fromstate" value="<%=fromstate%>" >
 
                     <div style="text-align: center; margin-top: 20px;">
                         <input type="submit" value="Submit">
                     </div>
-                    </FORM>
+                </FORM>
 
-                    <!--set focus in javascript-->
-                    <script type="text/javascript"><!--
-                    document.add.linknamenew.focus();
-                    //--></script>
+                <p style="text-align: center; padding: 20px 0px;">
+                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                </p>
 
+                <!--set focus in javascript-->
+                <script type="text/javascript"><!--
+                    document.editl.linknamenew.focus();
+                //--></script>
+                <%
+            }
 
-                    <p style="text-align: center; padding: 30px 7px;">
-                        <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
-                    </p>
-                    <%
-		}
-		
-		//state 3a_2, they are adding link, display choices of rows (subcategories) in this category
-		else if (state.equals("3a_2")){
+            //state 3m, display message asking user to click link they wish to move
+            else if (state.equals("3m")){
+                %>
+                Click the link on the left that you want to move
 
-                    //check if user chose to make new category, in whichcase adding it to specific row doesn't make sense
-                    if (catradio.equals("null")){
-                        %>
-                        You chose to add the link to a specific row in a category that doesn't exist yet.
-                        Next time please choose the default "Add link to end of this category" if
-                        you are making a new category.  Since you are here though, you can still-
-                        
-                        <p style="text-align: center;">
-                            <a href="editor.jsp?user=<%=username%>&state=2&fromstate=3a&linknamenew=<%=URLEncoder.encode(linknamenew, "UTF-8")%>&linkurlnew=<%=URLEncoder.encode(linkurlnew, "UTF-8")%>&catradio=<%=URLEncoder.encode(catradio, "UTF-8")%>&catnew=<%=URLEncoder.encode(catnew, "UTF-8")%>&rowradio=1">add this link to the new category you specified</a>
-                        </p>
-                        <%
-                    }
-                    else {
-                        //user didn't specify a new category
+                <p style="text-align: center; padding: 20px 0px;">
+                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                </p>
+                <%
+            }
 
-                        //first check for the unique case where they are adding to a category choice that doesn't have a
-                        //link in it yet, only case is with the "no category" option, if so notify the user and
-                        //give a choice like the one above.
-                        boolean noCatLinks = false;
-                        if (catradio.equals("")){
-                            //need to do query to check if there are any links in the non category
-                            Statement stat101 = null;
-                            ResultSet rslinksinnocat = null;
-                            String noCatQuery = "SELECT link_name FROM user_links WHERE user_id = "+user_id+" AND cat = ''";
-                            try {
-                                stat101 = conn.createStatement();
-                                rslinksinnocat = stat101.executeQuery(noCatQuery);
-                            }
-                            catch (Exception e) {
-                                out.print("Unable to make connection to production database");
-                                out.print(e);
-                            }
+            //state 3d, display message asking user to click link they wish to delete
+            else if (state.equals("3d")){
+                %>
+                Click the link on the left that you want to delete
 
-                            if (!rslinksinnocat.next()){ //unique case, give the user an option
-                                %>
-                                You chose to add the link to a specific row in the "No category" category but
-                                there are no links in there yet.
-                                Next time please choose the default "Add link to end of this category" if
-                                you are adding the first link to this or any new category.
-                                Since you are here though, you can still
-                                <p style="text-align: center;">
-                                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=3a&linknamenew=<%=URLEncoder.encode(linknamenew, "UTF-8")%>&linkurlnew=<%=URLEncoder.encode(linkurlnew, "UTF-8")%>&catradio=<%=URLEncoder.encode(catradio, "UTF-8")%>&catnew=<%=URLEncoder.encode(catnew, "UTF-8")%>&rowradio=1">add this link</a>
-                                </p>
-                                <%
-                            }
-                            else {
-                                noCatLinks = true; //there are links in the "no category" category
-                            }
+                <p style="text-align: center; padding: 20px 0px;">
+                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                </p>
+                <%
+            }
 
-                            rslinksinnocat.close();
-                        }
+            //state 3r, display message asking user to click category they wish to rename
+            else if (state.equals("3r")){
+                %>
+                Click the category name that you want to rename
 
-                        //either they aren't adding to the no-category links or they are but
-                        //there is at least one link there already... safe to do query and operations
-                        //finding/adding to rows within the category
-                        if (!catradio.equals("") || noCatLinks){
-                            %>
-                            Below are the names of the first links in each row (subcategory) in this category.
-                            Click the one that represents the row you wish to add the new link to.
-                            <%
+                <p style="text-align: center; padding: 20px 0px;">
+                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                </p>
+                <%
+            }
 
-                            //code to find and display the first links mentioned above
-                            Statement stat102 = null;
-                            ResultSet rsfirstlinks = null;
-                            //String firstLinksQuery = "SELECT linkname, subcatrank FROM "+user+" WHERE cat = '"+catradio+"' && linkrank = 1";
-                            //above query assumes first link in each subcategory has linkrank of 1.  Eventually this will be true after
-                            //I finish ordering things properly with "move link" and "delete link" and start them out in order in the first
-                            //place, but right now don't know what first linkrank is for first link in a subcategory, so use the lowest one
+            //state 3r_1, a category was chosen, display textbox with cat name and submit button for editing
+            else if (state.equals("3r_1") || state.equals("3r_2")){
 
-                            // query returns a table of the first links in each subcategory in a certain category
-                            String firstLinksQuery = "SELECT MIN(link_rank) AS firstLinkRank, link_name, cat_rank, sub_cat_rank FROM user_links WHERE user_id = "+user_id+" AND cat = '"+catradio+"' GROUP BY sub_cat_rank";
-                            //String firstLinksQuery = "SELECT MIN(linkrank), linkname, catrank, subcatrank FROM "+user+" WHERE cat = '"+catradio+"' GROUP BY subcatrank";
-                            try {
-                                stat102 = conn.createStatement();
-                                rsfirstlinks = stat102.executeQuery(firstLinksQuery);
-                            }
-                            catch (Exception e) {
-                                out.print("Unable to make connection to production database");
-                                out.print(e);
-                            }
-
-                            while (rsfirstlinks.next()){
-                                %>
-                                <p style="text-align: center;">
-                                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=3a_2&linknamenew=<%=URLEncoder.encode(linknamenew, "UTF-8")%>&linkurlnew=<%=URLEncoder.encode(linkurlnew, "UTF-8")%>&catradio=<%=URLEncoder.encode(catradio, "UTF-8")%>&catnew=<%=URLEncoder.encode(catnew, "UTF-8")%>&rowradio=<%=rowradio%>&catrank=<%=rsfirstlinks.getString("cat_rank")%>&subcatrank=<%=rsfirstlinks.getString("sub_cat_rank")%>">
-                                         <%=rsfirstlinks.getString("link_name")%>
-                                    </a>
-                                </p>
-                                <%
-                            }
-
-                            //After this, goes through logic up in state 2, from state = 3a_2
-
-                            rsfirstlinks.close();
-                        }
-                    }
+                //similar to 3e_1, need to do check if category entered is already in use.
+                if (state.equals("3r_2")){ //has unsuccessful attempt for editing category name
                     %>
-                    <p style="text-align: center; padding: 20px 0px;">
-                        <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
-                    </p>
+                    <span style="color: red;">
+                        The change was unsuccessful because either the category name you entered
+                        is already in use or you attempted to use invalid characters
+                    </span>
                     <%
-		}
-		
-		//state 3e, display message to click the link to edit
-		else if (state.equals("3e")){
-                    %>
-                    Click the link on the left that you want to edit
-                    
-                    <p style="text-align: center; padding: 20px 0px;">
-                        <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
-                    </p>
-                    <%
-		}
-		
-		//state 3e_1, display text boxes for editing linkname and URL
-		else if (state.equals("3e_1") || state.equals("3e_2")){
+                }
 
+                %>
+                <form name="editc" method="post" action="editor.jsp" enctype="application/x-www-form-urlencoded">
+                    Category name: <input name="catnew" size="20" maxlength=20 value="<%=cat%>" >
+                    <input type="hidden" name="cat" value="<%=cat%>" >
+                    <input type="hidden" name="user" value="<%=username%>" >
+                    <input type="hidden" name="state" value="2" >
+                    <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+                    <div style="text-align: center; margin-top: 20px;">
+                        <input type="submit" value="Submit">
+                    </div>
+                </FORM>
 
-                    //code to find and display the first links mentioned above
-                    Statement stat102 = null;
-                    ResultSet rsEditLink = null;
-                    String getLinkDetails = "SELECT link_name, link_address FROM user_links WHERE user_link_id = "+user_link_id;
-                    try {
-                        stat102 = conn.createStatement();
-                        rsEditLink = stat102.executeQuery(getLinkDetails);
-                    }
-                    catch (Exception e) {
-                        out.print("Unable to make connection to production database");
-                        out.print(e);
-                    }
+                <p style="text-align: center; padding: 20px 0px;">
+                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                </p>
 
+                <!--set focus in javascript-->
+                <script type="text/javascript"><!--
+                document.editc.catnew.focus();
+                //--></script>
+                <%
+            }
 
-                    if (rsEditLink.next()){
-                        linkname = rsEditLink.getString("link_name");
-                        linkurl = rsEditLink.getString("link_address");
-                    }
-                    rsEditLink.close();
+            //state 3g, display search options
+            else if (state.equals("3g")){
+                //we already have the user's search option in "searchFlag" variable
+                //from regular jumpstation code.  Commented out code below is in case
+                //we don't have that, maybe won't run the jumpstation code someday...
+                String currSelectionMsg = "";
+                String checked0 = "";
+                String checked1 = "";
+                String checked2 = "";
+                String checked3 = "";
+                String checked10 = "";
 
+                if (searchFlag == 0){
+                    currSelectionMsg = "Your current selection is for <span style=\"color: blue;\">no search</span>";
+                    checked0 = "checked";
+                }
+                else if (searchFlag == 1){
+                    currSelectionMsg = "Your current selection is for a <span style=\"color: blue\">Google search (Ngumbi branded)</span> "+
+                                "at <span style=\"color: blue\">"+searchUrl+"</span>";
+                    checked1 = "checked";
+                }
+                else if (searchFlag == 2){
+                    currSelectionMsg = "Your current selection is for a <span style=\"color: blue\">regular Google search</span> "+
+                                "at <span style=\"color: blue\">"+searchUrl+"</span>";
+                    checked2 = "checked";
+                }
+                else if (searchFlag == 3){
+                    currSelectionMsg = "Your current selection is for a <span style=\"color: blue\">Google SafeSearch (Ngumbi branded)</span> "+
+                                "at <span style=\"color: blue\">"+searchUrl+"</span>";
+                    checked3 = "checked";
+                }
+                else if (searchFlag == 10){
+                    currSelectionMsg = "Your current selection is for a <span style=\"color: blue\">Google SafeSearch (Ngumbi branded)</span> "+
+                                "at <span style=\"color: blue\">"+searchUrl+"</span>";
+                    checked10 = "checked";
+                }
+                %>
 
-                    if (state.equals("3e_2")){ //has unsuccessful attempt for editing link
-                        %>
-                        <span style="color: red;">
-                            The change was unsuccessful because either the link name or URL you entered
-                            is already in use for another link or you attempted to use invalid characters
-                        </span>
-                        <%
-                    }
+                <%=currSelectionMsg%>
 
-                    %>
-                    <FORM name="editl" METHOD="GET" ACTION="editor.jsp" ENCTYPE="application/x-www-form-urlencoded">
-                        Link name: <INPUT name=linknamenew SIZE=27 MAXLENGTH=30 value="<%=linkname%>" >
-                        <br><br>
-                        Link URL: <INPUT name=linkurlnew SIZE=27 MAXLENGTH=85 value="<%=linkurl%>" >
-                        <input type="hidden" name=user_link_id value="<%=user_link_id%>" >
-                        <input type="hidden" name=user value="<%=username%>" >
-                        <input type="hidden" name=state value="2" >
-                        <input type="hidden" name=fromstate value="<%=fromstate%>" >
-
-                        <div style="text-align: center; margin-top: 20px;">
-                            <input type="submit" value="Submit">
-                        </div>
-                    </FORM>
-
-                    <p style="text-align: center; padding: 20px 0px;">
-                        <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                <form name="editg" method="post" action="editor.jsp">
+                    <p>
+                        Choose new search options:
                     </p>
 
-                    <!--set focus in javascript-->
-                    <script type="text/javascript"><!--
-                        document.editl.linknamenew.focus();
-                    //--></script>
-                    <%
-		}
-		
-		//state 3m, display message asking user to click link they wish to move
-		else if (state.equals("3m")){
-                    %>
-                    Click the link on the left that you want to move
-                    
-                    <p style="text-align: center; padding: 20px 0px;">
-                        <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
-                    </p>
-                    <%
-		}
-		
-		//state 3d, display message asking user to click link they wish to delete
-		else if (state.equals("3d")){
-                    %>
-                    Click the link on the left that you want to delete
-
-                    <p style="text-align: center; padding: 20px 0px;">
-                        <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
-                    </p>
-                    <%
-		}
-		
-		//state 3r, display message asking user to click category they wish to rename
-		else if (state.equals("3r")){
-                    %>
-                    Click the category name that you want to rename
-
-                    <p style="text-align: center; padding: 20px 0px;">
-                        <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
-                    </p>
-                    <%
-		}
-		
-		//state 3r_1, a category was chosen, display textbox with cat name and submit button for editing
-		else if (state.equals("3r_1") || state.equals("3r_2")){
-			
-                    //similar to 3e_1, need to do check if category entered is already in use.
-                    if (state.equals("3r_2")){ //has unsuccessful attempt for editing category name
-                        %>
-                        <span style="color: red;">
-                            The change was unsuccessful because either the category name you entered
-                            is already in use or you attempted to use invalid characters
-                        </span>
-                        <%
-                    }
-
-                    %>
-                    <FORM name="editc" METHOD="POST" ACTION="editor.jsp" ENCTYPE="application/x-www-form-urlencoded">
-                        Category name: <INPUT name=catnew SIZE=20 MAXLENGTH=20 value="<%=cat%>" >
-                        <input type="hidden" name=cat value="<%=cat%>" >
-                        <input type="hidden" name=user value="<%=username%>" >
-                        <input type="hidden" name=state value="2" >
-                        <input type="hidden" name=fromstate value="<%=fromstate%>" >
-                        <div style="text-align: center; margin-top: 20px;">
-                            <input type="submit" value="Submit">
-                        </div>
-                    </FORM>
-
-                    <p style="text-align: center; padding: 20px 0px;">
-                        <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
-                    </p>
-
-                    <!--set focus in javascript-->
-                    <script type="text/javascript"><!--
-                    document.editc.catnew.focus();
-                    //--></script>
-                    <%
-		}
-		
-		//state 3g, display search options
-		else if (state.equals("3g")){
-                    //we already have the user's search option in "searchFlag" variable
-                    //from regular jumpstation code.  Commented out code below is in case
-                    //we don't have that, maybe won't run the jumpstation code someday...
-                    String currSelectionMsg = "";
-                    String checked0 = "";
-                    String checked1 = "";
-                    String checked2 = "";
-                    String checked3 = "";
-                    String checked10 = "";
-
-                    if (searchFlag == 0){
-                        currSelectionMsg = "Your current selection is for <span style=\"color: blue;\">no search</span>";
-                        checked0 = "checked";
-                    }
-                    else if (searchFlag == 1){
-                        currSelectionMsg = "Your current selection is for a <span style=\"color: blue\">Google search (Ngumbi branded)</span> "+
-                                    "at <span style=\"color: blue\">"+searchUrl+"</span>";
-                        checked1 = "checked";
-                    }
-                    else if (searchFlag == 2){
-                        currSelectionMsg = "Your current selection is for a <span style=\"color: blue\">regular Google search</span> "+
-                                    "at <span style=\"color: blue\">"+searchUrl+"</span>";
-                        checked2 = "checked";
-                    }
-                    else if (searchFlag == 3){
-                        currSelectionMsg = "Your current selection is for a <span style=\"color: blue\">Google SafeSearch (Ngumbi branded)</span> "+
-                                    "at <span style=\"color: blue\">"+searchUrl+"</span>";
-                        checked3 = "checked";
-                    }
-                    else if (searchFlag == 10){
-                        currSelectionMsg = "Your current selection is for a <span style=\"color: blue\">Google SafeSearch (Ngumbi branded)</span> "+
-                                    "at <span style=\"color: blue\">"+searchUrl+"</span>";
-                        checked10 = "checked";
-                    }
-                    %>
-
-                    <%=currSelectionMsg%>
-
-                    <FORM name="editg" method="POST" action="editor.jsp">
-                        <p>
-                            Choose new search options:
-                        </p>
-
-                        <div>
-                            <label id="searchradio0">
-                                <input type="radio" name="searchradio" value="0" id="searchradio0" <%=checked0%> >No search
-                            </label>
-                            <br>
-                            <label id="searchradio1">
-                                <input type="radio" name="searchradio" value="1" <%=checked1%> >Google search<span style="font-size: .7em">(n)</span>
-                            </label>
-                            <br>
-                            <label id="searchradio0">
-                            <input type="radio" name="searchradio" value="2" <%=checked2%> >Google search
-                            </label>
-                            <br>
-                            <label id="searchradio0">
-                            <input type="radio" name="searchradio" value="3" <%=checked3%> >Google SafeSearch<span style="font-size: .7em">(n)</span>
-                            </label>
-                            <br>
-                            <label id="searchradio0">
-                            <input type="radio" name="searchradio" value="10" <%=checked10%> >Yahoo! search
-                            </label>
-
-                            <input type="hidden" name="user" value="<%=username%>" >
-                            <input type="hidden" name="state" value="2" >
-                            <input type="hidden" name="fromstate" value="<%=fromstate%>" >
-                            <input type="hidden" name="searchUrl" value="<%=searchUrl%>" >
-                            <input type="hidden" name="customSearchUrl" value="" >
-                            <input type="hidden" name="searchLang" value="<%=searchLang%>" >
-                        </div>
-
-                        <div style="padding: 15px 0px; text-align: center;">
-                            <input type="submit" value="Submit">
-                        </div>
-                    </FORM>
-
-                    <p style="text-align: center; padding: 20px 0px;">
-                        <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
-                    </p>
-                    <%
-		}
-			
-		//state 3g, display search options
-		else if (state.equals("3g_0")){			
-
-                    //second page of search options, only for google search choices
-                    %>
-                    <form name="editg0" method="POST" action="editor.jsp">
-
-                        <div style="padding: 15px 0px;">
-                            Google URL: <br>
-                            <select name="searchUrl" style="width: 200px;">
-                                <%
-                                if (rsuserdata.getString("searchUrl").indexOf("google") > -1){
-                                    //previously had yahoo choice, put first and preselect it
-                                    %>
-                                    <option value="<%=rsuserdata.getString("searchUrl")%>" SELECTED ><%=rsuserdata.getString("searchUrl")%></option>
-                                    <optgroup label="-----------------"></optgroup>
-                                    <%
-                                }
-                                %>
-                                <option value="www.google.com" >Default - www.google.com</option>
-                                <option value="www.google.com.au">Australia - www.google.com.au</option><!-- Australia -->
-                                <option value="www.google.be">België - www.google.be</option><!-- Belgium -->
-                                <option value="www.google.com.br">Brasil - www.google.com.br</option><!-- Brazil -->
-                                <option value="www.google.ca">Canada - www.google.ca</option><!-- Canada -->
-                                <option value="www.google.cn">中国 - www.google.cn</option><!-- China -->
-                                <option value="www.google.com.hk">香港 - www.google.com.hk</option><!-- China, Hong Kong (not censored) -->
-                                <option value="www.google.com.tw">台灣 - www.google.com.tw</option><!-- Taiwan -->
-                                <option value="www.google.dk">Danmark - www.google.dk</option><!-- Denmark -->
-                                <option value="www.google.de">Deutschland - www.google.de</option><!-- Germany -->
-                                <option value="www.google.fr">France - www.google.fr</option><!-- France -->
-                                <option value="www.google.gr">Ελλάς - www.google.gr</option><!-- Greece -->
-                                <option value="www.google.es">España - www.google.es</option><!-- Spain -->
-                                <option value="www.google.ie">Ireland - www.google.ie</option><!-- Ireland -->
-                                <option value="www.google.co.id">Indonesia - www.google.co.id</option><!-- Indonesia -->
-                                <option value="www.google.co.in">India - www.google.co.in</option><!-- India -->
-                                <option value="www.google.it">Italia - www.google.it</option><!-- Italy -->
-                                <option value="www.google.co.kr">한국 - www.google.co.kr</option><!-- Korea (South) -->
-                                <option value="www.google.lv">Latvija - www.google.lv</option><!-- Latvia -->
-                                <option value="www.google.com.mx">México - www.google.com.mx</option><!-- Mexico -->
-                                <option value="www.google.nl">Nederland - www.google.nl</option><!-- Netherlands -->
-                                <option value="www.google.co.nz">New Zealand - www.google.co.nz</option><!-- New Zealand -->
-                                <option value="www.google.com.pk">Pakistan - www.google.com.pk</option><!-- Pakistan -->
-                                <option value="www.google.com.ph">Pilipinas - www.google.com.ph</option><!-- Philippines -->
-                                <option value="www.google.ru">Россия - www.google.ru</option><!-- Russia -->
-                                <option value="www.google.fi">Suomi - www.google.fi</option><!-- Finland -->
-                                <option value="www.google.se">Sverige - www.google.se</option><!-- Sweden -->
-                                <option value="www.google.com.tr">Türkiye - www.google.com.tr</option><!-- Turkey -->
-                                <option value="www.google.co.uk">UK - www.google.co.uk</option><!-- UK -->
-                                <option value="www.google.com">USA - www.google.com</option><!-- USA -->
-                            </select>
-                            <br><br>
-                            or
-                            <input type="text" name="customSearchUrl" size=20 maxlength=45 value="">
-                        </div>
-
-                        <div style="padding: 15px 0px;">
-                            Language
-                            <select name="searchLang">
-                                <%
-                                String english_selected = "selected";
-                                if (rsuserdata.getString("searchUrl").indexOf("google") > -1){
-                                    //previously had yahoo choice, put first and preselect it
-                                    %>
-                                    <option value="<%=rsuserdata.getString("searchLang")%>" SELECTED ><%=rsuserdata.getString("searchLang")%></option>
-                                    <optgroup label="-----------------"></optgroup>
-                                    <%
-                                    english_selected = "";//preselect english if there was no language, such as if user had yahoo or no search previously
-                                }
-                                %>
-                                <option value="ar">العربية</option><!-- Arabic -->
-                                <option value="da">dansk</option><!-- Danish -->
-                                <option value="de">Deutsch</option><!-- German -->
-                                <option value="el">Ελληνικά</option><!-- Greek -->
-                                <option value="en" <%=english_selected%> >English</option><!-- English -->
-                                <option value="es">español</option><!-- Spanish -->
-                                <option value="tl">Filipino</option><!-- Filipino -->
-                                <option value="fr">Français</option><!-- French -->
-                                <option value="iw">עברית</option><!-- Hebrew -->
-                                <option value="hi">हिंदी</option><!-- Hindi -->
-                                <option value="lv">Latviešu</option><!-- Latvian -->
-                                <option value="nl">Nederlands</option><!-- Dutch -->
-                                <option value="ja">日本語</option><!-- Japanese -->
-                                <option value="pt-BR">Português (Br)</option><!-- Portuguese (Brazil) -->
-                                <option value="pt-PT">Português (Pt)</option><!-- Portuguese (Portugal) -->
-                                <option value="ru">Россию</option><!-- Russian -->
-                                <option value="fi">suomi</option><!-- Finnish -->
-                                <option value="sv">Svenska</option><!-- Swedish -->
-                                <option value="th">ภาษาไทย</option><!-- Thai -->
-                                <option value="tr">Türk</option><!-- Turkish -->
-                                <option value="ur">اردو</option><!-- Urdu (for Pakistan) -->
-                                <option value="zh-CN">简体中文</option><!-- Chinese (simplified) -->
-                                <option value="zh-TW">繁體中文</option><!-- Chinese (traditional) -->
-                                <option value="xx-piglatin">Pig Latin</option><!-- Pig Latin -->
-                            </select>
-                        </div>
+                    <div>
+                        <label id="searchradio0">
+                            <input type="radio" name="searchradio" value="0" id="searchradio0" <%=checked0%> >No search
+                        </label>
+                        <br>
+                        <label id="searchradio1">
+                            <input type="radio" name="searchradio" value="1" <%=checked1%> >Google search<span style="font-size: .7em">(n)</span>
+                        </label>
+                        <br>
+                        <label id="searchradio0">
+                        <input type="radio" name="searchradio" value="2" <%=checked2%> >Google search
+                        </label>
+                        <br>
+                        <label id="searchradio0">
+                        <input type="radio" name="searchradio" value="3" <%=checked3%> >Google SafeSearch<span style="font-size: .7em">(n)</span>
+                        </label>
+                        <br>
+                        <label id="searchradio0">
+                        <input type="radio" name="searchradio" value="10" <%=checked10%> >Yahoo! search
+                        </label>
 
                         <input type="hidden" name="user" value="<%=username%>" >
                         <input type="hidden" name="state" value="2" >
                         <input type="hidden" name="fromstate" value="<%=fromstate%>" >
-                        <input type="hidden" name="searchradio" value="<%=searchradio%>" >
-
-                        <div style="padding: 15px 0px; text-align: center;">
-                            <input type="submit" value="Submit">
-                        </div>
-
-                    </form>
-
-                    <div style="text-align: center; ">
-                       <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                        <input type="hidden" name="searchUrl" value="<%=searchUrl%>" >
+                        <input type="hidden" name="customSearchUrl" value="" >
+                        <input type="hidden" name="searchLang" value="<%=searchLang%>" >
                     </div>
-                    <%
-		}
 
-		else if (state.equals("3g_10") ){
+                    <div style="padding: 15px 0px; text-align: center;">
+                        <input type="submit" value="Submit">
+                    </div>
+                </FORM>
 
-			//second page of search options, only for yahoo search choices
-			%>
-                        <center><p>
+                <p style="text-align: center; padding: 20px 0px;">
+                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                </p>
+                <%
+            }
 
-			<form name="editg0" method="POST" action="editor.jsp">
-			Yahoo! URL: <br>
-			<select name="searchUrl" style="width: 180px;">
+            //state 3g, display search options
+            else if (state.equals("3g_0")){			
+
+                //second page of search options, only for google search choices
+                %>
+                <form name="editg0" method="post" action="editor.jsp">
+
+                    <div style="padding: 15px 0px;">
+                        Google URL: <br>
+                        <select name="searchUrl" style="width: 200px;">
                             <%
-                            if (rsuserdata.getString("searchUrl").indexOf("yahoo") > -1){
+                            if (rsuserdata.getString("searchUrl").indexOf("google") > -1){
                                 //previously had yahoo choice, put first and preselect it
                                 %>
                                 <option value="<%=rsuserdata.getString("searchUrl")%>" SELECTED ><%=rsuserdata.getString("searchUrl")%></option>
@@ -2508,114 +2227,226 @@ else {
                                 <%
                             }
                             %>
-                            <option value="search.yahoo.com" >Default - search.yahoo.com</option>
-                            <option value="au.search.yahoo.com">Australia - au.search.yahoo.com</option><!-- Australia -->
-                            <option value="br.search.yahoo.com">Brasil - br.search.yahoo.com</option><!-- Brazil -->
-                            <option value="ca.search.yahoo.com">Canada - ca.search.yahoo.com</option><!-- Canada -->
-                            <option value="dk.search.yahoo.com">Danmark - dk.search.yahoo.com</option><!-- Denmark -->
-                            <option value="de.search.yahoo.com">Deutschland - de.search.yahoo.com</option><!-- Germany -->
-                            <option value="gr.search.yahoo.com">Ελλάς - gr.search.yahoo.com</option><!-- Greece -->
-                            <option value="es.search.yahoo.com">España - es.search.yahoo.com</option><!-- Spain -->
-                            <option value="fr.search.yahoo.com">France - fr.search.yahoo.com</option><!-- France -->
-                            <option value="one.cn.yahoo.com">中国 - one.cn.yahoo.com</option><!-- China -->
-                            <option value="hk.search.yahoo.com">香港 - hk.search.yahoo.com</option><!-- China -->
-                            <option value="tw.search.yahoo.com">中華民國 - tw.search.yahoo.com</option><!-- China (Taiwan) -->
-                            <option value="in.search.yahoo.com">India - in.search.yahoo.com</option><!-- India -->
-                            <option value="id.search.yahoo.com">Indonesia - id.search.yahoo.com</option><!-- Indonesia -->
-                            <option value="it.search.yahoo.com">Italia - it.search.yahoo.com</option><!-- Italy -->
-                            <option value="kr.search.yahoo.com">한국 - kr.search.yahoo.com</option><!-- Korea (South) -->
-                            <option value="mx.search.yahoo.com">México - mx.search.yahoo.com</option><!-- Mexico -->
-                            <option value="nl.search.yahoo.com">Nederland - nl.search.yahoo.com</option><!-- Netherlands -->
-                            <option value="nz.search.yahoo.com">New Zealand - nz.search.yahoo.com</option><!-- New Zealand -->
-                            <option value="ph.search.yahoo.com">Pilipinas - ph.search.yahoo.com</option><!-- Philippines -->
-                            <option value="ru.search.yahoo.com">Россия - ru.search.yahoo.com</option><!-- Russia -->
-                            <option value="ch.search.yahoo.com">Schweiz - ch.search.yahoo.com</option><!-- Switzerland (Confederation of Helvetia) -->
-                            <option value="fi.search.yahoo.com">Suomi - fi.search.yahoo.com</option><!-- Finland -->
-                            <option value="sv.search.yahoo.com">Sverige - sv.search.yahoo.com</option><!-- Sweden -->
-                            <option value="th.search.yahoo.com">ประเทศไทย - th.search.yahoo.com</option><!-- Thailand -->
-                            <option value="tr.search.yahoo.com">Türkiye - tr.search.yahoo.com</option><!-- Turkey -->
-                            <option value="uk.search.yahoo.com">UK & Ireland - uk.search.yahoo.com</option><!-- United Kingdom -->
-                            <option value="us.search.yahoo.com">USA - us.search.yahoo.com</option><!-- Canada -->
-                            <option value="asia.search.yahoo.com">Asia - asia.search.yahoo.com</option><!-- Asia -->
-			</select><br>
-			or
-                        <input type="text" name="customSearchUrl" size=15 maxlength=45 value="">
-                        <input type="hidden" name="searchLang" value="">
+                            <option value="www.google.com" >Default - www.google.com</option>
+                            <option value="www.google.com.au">Australia - www.google.com.au</option><!-- Australia -->
+                            <option value="www.google.be">België - www.google.be</option><!-- Belgium -->
+                            <option value="www.google.com.br">Brasil - www.google.com.br</option><!-- Brazil -->
+                            <option value="www.google.ca">Canada - www.google.ca</option><!-- Canada -->
+                            <option value="www.google.cn">中国 - www.google.cn</option><!-- China -->
+                            <option value="www.google.com.hk">香港 - www.google.com.hk</option><!-- China, Hong Kong (not censored) -->
+                            <option value="www.google.com.tw">台灣 - www.google.com.tw</option><!-- Taiwan -->
+                            <option value="www.google.dk">Danmark - www.google.dk</option><!-- Denmark -->
+                            <option value="www.google.de">Deutschland - www.google.de</option><!-- Germany -->
+                            <option value="www.google.fr">France - www.google.fr</option><!-- France -->
+                            <option value="www.google.gr">Ελλάς - www.google.gr</option><!-- Greece -->
+                            <option value="www.google.es">España - www.google.es</option><!-- Spain -->
+                            <option value="www.google.ie">Ireland - www.google.ie</option><!-- Ireland -->
+                            <option value="www.google.co.id">Indonesia - www.google.co.id</option><!-- Indonesia -->
+                            <option value="www.google.co.in">India - www.google.co.in</option><!-- India -->
+                            <option value="www.google.it">Italia - www.google.it</option><!-- Italy -->
+                            <option value="www.google.co.kr">한국 - www.google.co.kr</option><!-- Korea (South) -->
+                            <option value="www.google.lv">Latvija - www.google.lv</option><!-- Latvia -->
+                            <option value="www.google.com.mx">México - www.google.com.mx</option><!-- Mexico -->
+                            <option value="www.google.nl">Nederland - www.google.nl</option><!-- Netherlands -->
+                            <option value="www.google.co.nz">New Zealand - www.google.co.nz</option><!-- New Zealand -->
+                            <option value="www.google.com.pk">Pakistan - www.google.com.pk</option><!-- Pakistan -->
+                            <option value="www.google.com.ph">Pilipinas - www.google.com.ph</option><!-- Philippines -->
+                            <option value="www.google.ru">Россия - www.google.ru</option><!-- Russia -->
+                            <option value="www.google.fi">Suomi - www.google.fi</option><!-- Finland -->
+                            <option value="www.google.se">Sverige - www.google.se</option><!-- Sweden -->
+                            <option value="www.google.com.tr">Türkiye - www.google.com.tr</option><!-- Turkey -->
+                            <option value="www.google.co.uk">UK - www.google.co.uk</option><!-- UK -->
+                            <option value="www.google.com">USA - www.google.com</option><!-- USA -->
+                        </select>
+                        <br><br>
+                        or
+                        <input type="text" name="customSearchUrl" size="20" maxlength="45" value="">
+                    </div>
+
+                    <div style="padding: 15px 0px;">
+                        Language
+                        <select name="searchLang">
+                            <%
+                            String english_selected = "selected";
+                            if (rsuserdata.getString("searchUrl").indexOf("google") > -1){
+                                //previously had yahoo choice, put first and preselect it
+                                %>
+                                <option value="<%=rsuserdata.getString("searchLang")%>" SELECTED ><%=rsuserdata.getString("searchLang")%></option>
+                                <optgroup label="-----------------"></optgroup>
+                                <%
+                                english_selected = "";//preselect english if there was no language, such as if user had yahoo or no search previously
+                            }
+                            %>
+                            <option value="ar">العربية</option><!-- Arabic -->
+                            <option value="da">dansk</option><!-- Danish -->
+                            <option value="de">Deutsch</option><!-- German -->
+                            <option value="el">Ελληνικά</option><!-- Greek -->
+                            <option value="en" <%=english_selected%> >English</option><!-- English -->
+                            <option value="es">español</option><!-- Spanish -->
+                            <option value="tl">Filipino</option><!-- Filipino -->
+                            <option value="fr">Français</option><!-- French -->
+                            <option value="iw">עברית</option><!-- Hebrew -->
+                            <option value="hi">हिंदी</option><!-- Hindi -->
+                            <option value="lv">Latviešu</option><!-- Latvian -->
+                            <option value="nl">Nederlands</option><!-- Dutch -->
+                            <option value="ja">日本語</option><!-- Japanese -->
+                            <option value="pt-BR">Português (Br)</option><!-- Portuguese (Brazil) -->
+                            <option value="pt-PT">Português (Pt)</option><!-- Portuguese (Portugal) -->
+                            <option value="ru">Россию</option><!-- Russian -->
+                            <option value="fi">suomi</option><!-- Finnish -->
+                            <option value="sv">Svenska</option><!-- Swedish -->
+                            <option value="th">ภาษาไทย</option><!-- Thai -->
+                            <option value="tr">Türk</option><!-- Turkish -->
+                            <option value="ur">اردو</option><!-- Urdu (for Pakistan) -->
+                            <option value="zh-CN">简体中文</option><!-- Chinese (simplified) -->
+                            <option value="zh-TW">繁體中文</option><!-- Chinese (traditional) -->
+                            <option value="xx-piglatin">Pig Latin</option><!-- Pig Latin -->
+                        </select>
+                    </div>
+
+                    <input type="hidden" name="user" value="<%=username%>" >
+                    <input type="hidden" name="state" value="2" >
+                    <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+                    <input type="hidden" name="searchradio" value="<%=searchradio%>" >
+
+                    <div style="padding: 15px 0px; text-align: center;">
+                        <input type="submit" value="Submit">
+                    </div>
+
+                </form>
+
+                <div style="text-align: center; ">
+                   <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                </div>
+                <%
+            }
+
+            else if (state.equals("3g_10") ){
+
+                    //second page of search options, only for yahoo search choices
+                    %>
+                    <center><p>
+
+                    <form name="editg0" method="post" action="editor.jsp">
+                    Yahoo! URL: <br>
+                    <select name="searchUrl" style="width: 180px;">
+                        <%
+                        if (rsuserdata.getString("searchUrl").indexOf("yahoo") > -1){
+                            //previously had yahoo choice, put first and preselect it
+                            %>
+                            <option value="<%=rsuserdata.getString("searchUrl")%>" SELECTED ><%=rsuserdata.getString("searchUrl")%></option>
+                            <optgroup label="-----------------"></optgroup>
+                            <%
+                        }
+                        %>
+                        <option value="search.yahoo.com" >Default - search.yahoo.com</option>
+                        <option value="au.search.yahoo.com">Australia - au.search.yahoo.com</option><!-- Australia -->
+                        <option value="br.search.yahoo.com">Brasil - br.search.yahoo.com</option><!-- Brazil -->
+                        <option value="ca.search.yahoo.com">Canada - ca.search.yahoo.com</option><!-- Canada -->
+                        <option value="dk.search.yahoo.com">Danmark - dk.search.yahoo.com</option><!-- Denmark -->
+                        <option value="de.search.yahoo.com">Deutschland - de.search.yahoo.com</option><!-- Germany -->
+                        <option value="gr.search.yahoo.com">Ελλάς - gr.search.yahoo.com</option><!-- Greece -->
+                        <option value="es.search.yahoo.com">España - es.search.yahoo.com</option><!-- Spain -->
+                        <option value="fr.search.yahoo.com">France - fr.search.yahoo.com</option><!-- France -->
+                        <option value="one.cn.yahoo.com">中国 - one.cn.yahoo.com</option><!-- China -->
+                        <option value="hk.search.yahoo.com">香港 - hk.search.yahoo.com</option><!-- China -->
+                        <option value="tw.search.yahoo.com">中華民國 - tw.search.yahoo.com</option><!-- China (Taiwan) -->
+                        <option value="in.search.yahoo.com">India - in.search.yahoo.com</option><!-- India -->
+                        <option value="id.search.yahoo.com">Indonesia - id.search.yahoo.com</option><!-- Indonesia -->
+                        <option value="it.search.yahoo.com">Italia - it.search.yahoo.com</option><!-- Italy -->
+                        <option value="kr.search.yahoo.com">한국 - kr.search.yahoo.com</option><!-- Korea (South) -->
+                        <option value="mx.search.yahoo.com">México - mx.search.yahoo.com</option><!-- Mexico -->
+                        <option value="nl.search.yahoo.com">Nederland - nl.search.yahoo.com</option><!-- Netherlands -->
+                        <option value="nz.search.yahoo.com">New Zealand - nz.search.yahoo.com</option><!-- New Zealand -->
+                        <option value="ph.search.yahoo.com">Pilipinas - ph.search.yahoo.com</option><!-- Philippines -->
+                        <option value="ru.search.yahoo.com">Россия - ru.search.yahoo.com</option><!-- Russia -->
+                        <option value="ch.search.yahoo.com">Schweiz - ch.search.yahoo.com</option><!-- Switzerland (Confederation of Helvetia) -->
+                        <option value="fi.search.yahoo.com">Suomi - fi.search.yahoo.com</option><!-- Finland -->
+                        <option value="sv.search.yahoo.com">Sverige - sv.search.yahoo.com</option><!-- Sweden -->
+                        <option value="th.search.yahoo.com">ประเทศไทย - th.search.yahoo.com</option><!-- Thailand -->
+                        <option value="tr.search.yahoo.com">Türkiye - tr.search.yahoo.com</option><!-- Turkey -->
+                        <option value="uk.search.yahoo.com">UK & Ireland - uk.search.yahoo.com</option><!-- United Kingdom -->
+                        <option value="us.search.yahoo.com">USA - us.search.yahoo.com</option><!-- Canada -->
+                        <option value="asia.search.yahoo.com">Asia - asia.search.yahoo.com</option><!-- Asia -->
+                    </select><br>
+                    or
+                    <input type="text" name="customSearchUrl" size="15" maxlength="45" value="">
+                    <input type="hidden" name="searchLang" value="">
 
 
 
-			</center>
+                    </center>
 
-			<center><input type="hidden" name=user value="<%=username%>" >
-			<input type="hidden" name=state value="2" >
-			<input type="hidden" name=fromstate value="<%=fromstate%>" >
-			<input type="hidden" name=searchradio value="<%=searchradio%>" >
+                    <center><input type="hidden" name="user" value="<%=username%>" >
+                    <input type="hidden" name="state" value="2" >
+                    <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+                    <input type="hidden" name="searchradio" value="<%=searchradio%>" >
 
-			<p><input TYPE="submit" value="Submit">
-			</form>
-			<br><br><br>
-
-			<a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a><%
-		}
-		
-		//state 3p, display boxes to change password
-		else if (state.equals("3p") || state.equals("3p_1")){
-			
-			//similar to 3e_1, need to do check if new password entered is invalid
-			if (state.equals("3p_1")){ //has unsuccessful attempt for editing category name
-				%><font color=red>The password change was unsuccessful because 
-				either the two fields didn't match or you attempted to use invalid characters.  
-				Spaces are invalid.  Try sticking to letters and numbers.  Try again.</font><%
-			}
-			
-			%><p>Please enter your new password twice.  It may contain <i>some</i> punctuation characters.
-			<form name="editp" method="POST" action="editor.jsp" enctype="application/x-www-form-urlencoded"> 
-			<input type="password" name="pass" size="20" maxlength="30" value="">
-			<input type="password" name="cpass" size="20" maxlength="30" value="">
-			<input type="hidden" name="user" value="<%=username%>" >
-			<input type="hidden" name="state" value="2" >
-			<input type="hidden" name="fromstate" value="<%=fromstate%>" >
-			<p><input type="submit" value="Submit">
-			</form>
-			
-			<!--set focus in javascript-->
-			<script type="text/javascript"><!--
-                            document.editp.pass.focus();
-			//--></script>
-			<br><br><br>			
-			
-			<a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a><%
-			
-		}
-		
-		
-		//state 3dj, display confirmation to delete jumpstation
-		else if (state.equals("3dj")){
-                    %>You're sure you want to delete your account?
-                    <p><a href="editor.jsp?user=<%=username%>&state=2&fromstate=<%=fromstate%>" >Yes</a>
+                    <p><input type="submit" value="Submit">
+                    </form>
                     <br><br><br>
 
                     <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a><%
-			
-		}
-		
-		
-		
-		
-		
-		
-		//
-		
-		
-		
-		%>
-		</td>
-		</tr>
-		</table>
-		<%
+            }
+
+            //state 3p, display boxes to change password
+            else if (state.equals("3p") || state.equals("3p_1")){
+
+                    //similar to 3e_1, need to do check if new password entered is invalid
+                    if (state.equals("3p_1")){ //has unsuccessful attempt for editing category name
+                            %><font color=red>The password change was unsuccessful because 
+                            either the two fields didn't match or you attempted to use invalid characters.  
+                            Spaces are invalid.  Try sticking to letters and numbers.  Try again.</font><%
+                    }
+
+                    %><p>Please enter your new password twice.  It may contain <i>some</i> punctuation characters.
+                    <form name="editp" method="post" action="editor.jsp" enctype="application/x-www-form-urlencoded"> 
+                    <input type="password" name="pass" size="20" maxlength="30" value="">
+                    <input type="password" name="cpass" size="20" maxlength="30" value="">
+                    <input type="hidden" name="user" value="<%=username%>" >
+                    <input type="hidden" name="state" value="2" >
+                    <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+                    <p><input type="submit" value="Submit">
+                    </form>
+
+                    <!--set focus in javascript-->
+                    <script type="text/javascript"><!--
+                        document.editp.pass.focus();
+                    //--></script>
+                    <br><br><br>			
+
+                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a><%
+
+            }
+
+
+            //state 3dj, display confirmation to delete jumpstation
+            else if (state.equals("3dj")){
+                %>You're sure you want to delete your account?
+                <p><a href="editor.jsp?user=<%=username%>&state=2&fromstate=<%=fromstate%>" >Yes</a>
+                <br><br><br>
+
+                <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a><%
+
+            }
+
+
+
+
+
+
+            //
+
+
+
+            %>
+            </td>
+            </tr>
+            </table>
+            <%
 			
 	rsuserdata.close();
-	} //end conditional for state 3dj (user data was deleted)
+    } //end conditional for state 3dj (user data was deleted)
 } //end conditional for valid username check
 
 rsuser.close();
