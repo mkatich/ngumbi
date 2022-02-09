@@ -31,9 +31,6 @@ String textColor = "000000";
 //String fontSize = "-1";
 String fontFamily = "arial,sans-serif,helvetica";
 
-//retrieve all info needed for user page from database
-UserPage userPage = UserPageDAO.getUserPage(usernameInput);
-
 
 %>
 <html>
@@ -69,17 +66,17 @@ body {
     color: <%=textColor%>;
     font-family:<%=fontFamily%>;
 }
-a.user_link {
-    font-size: .8em;
-}
 
 -->
 </style>
 <jsp:include page="inc_google_analytics.jsp" />
 </head>
-
+<body>
     <%
     
+
+    //retrieve all info needed for user page from database
+    UserPage userPage = UserPageDAO.getUserPage(usernameInput);
     
     //check if username exists
     if (userPage != null){
@@ -91,7 +88,9 @@ a.user_link {
         UserLink[] userLinks = userPage.getUserLinks();
         
         
+        //set userPage as a session attribute so the include files can use it
         session.setAttribute("userPage", userPage);
+        
         
         //pull user's search option details
         int searchOption = user.getSearchOption();
@@ -127,5 +126,5 @@ a.user_link {
     }
     
     %>
-
+</body>
 </html>

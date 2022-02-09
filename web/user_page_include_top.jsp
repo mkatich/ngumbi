@@ -22,6 +22,13 @@
     String searchUrl = user.getSearchUrl();
     String searchLang = user.getSearchLang();
     
+    //get mode for displaying links - default is 0 and shows regular link
+    String topDisplayModeStr = request.getParameter("topDisplayMode");
+    int topDisplayMode = 0;
+    if (topDisplayModeStr != null && topDisplayModeStr.matches("\\d+")){
+        topDisplayMode = Integer.parseInt(topDisplayModeStr);
+    }
+    
 %>
         <!-- Start Page Header (top table) -->
         <table cellpadding="0" cellspacing="0" border="0" width="100%">
@@ -109,26 +116,37 @@
                         <%
                     }	
                     %>
-                    
                 </td>
-                <td align="right" valign="top">
-                    <%
-                    
-                    //Show the "Edit" link in top right, passes username. If user
-                    //is secure already, skip to state 2. Otherwise go to state 1
-                    //for login.
-                    
-                    if (userLogin.isSecure()){
-                        //user did edit before and secure, skip login screen 
-                        %><a href="../editor.jsp?user=<%=username%>&state=2&fromstate=0">Edit</a><%
-                    }
-                    else {
-                        //haven't edited yet in this browser session, not secure
-                        %><a href="../editor.jsp?user=<%=username%>&state=1&fromstate=0">Edit</a><%
-                    }
-                    
+                <%
+                
+                //display the Edit link only if topDisplayMode is 0 (default)
+                if (topDisplayMode == 0){
                     %>
-                </td>
+                    <td align="right" valign="top">
+                        <%
+
+                        //Show the "Edit" link in top right, passes username. If user
+                        //is secure already, skip to state 2. Otherwise go to state 1
+                        //for login.
+
+                        if (userLogin.isSecure()){
+                            //user did edit before and secure, skip login screen 
+                            %><a href="../editor.jsp?user=<%=username%>&state=2&fromstate=0">Edit</a><%
+                        }
+                        else {
+                            //haven't edited yet in this browser session, not secure
+                            %><a href="../editor.jsp?user=<%=username%>&state=1&fromstate=0">Edit</a><%
+                        }
+
+                        %>
+                    </td>
+                    <%
+                }
+                else if (topDisplayMode == 1){
+                    //do not display Edit link since we are likely already editing
+                }
+                
+                %>
             </tr>
         </table>
         <!-- End Start Page Header (top table) -->

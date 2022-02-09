@@ -1,6 +1,6 @@
 ﻿<%
 /*********************************************************************
-*	File: editor.jsp
+*	File: editor_NEW.jsp
 *	Description: This is the editor used by existing users to edit
 *	their jumpstation.
 *
@@ -12,7 +12,7 @@
 /*
 Explanation of states of the user interface.  
 
-*state 1 - they clicked edit on their jumpstation, take them to editor.jsp with username passed, which will 
+*state 1 - they clicked edit on their jumpstation, take them to editor_NEW.jsp with username passed, which will 
 	be their jumpstation with a yellow column on the right.  State 1 will just have their username and a 
 	textbox for them to enter their password.
 *state 2 - after they enter correct (CHECK) password, the column on right will show all editing options.  
@@ -49,7 +49,7 @@ Explanation of states of the user interface.
 %>
 <%@ page language="java" import="java.sql.*" import="java.net.*"%>
 <%@page import="UserLogin.UserLoginDAO"%>
-<%@page import="UserPage.User"%>
+<%@page import="UserPage.*"%>
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <jsp:useBean id="userLogin" class="UserLogin.UserLogin" scope="session" />
 <jsp:useBean id="logon" scope="session" class="logonBean.logon" />
@@ -94,7 +94,12 @@ String textColor = "000000";
 String fontFamily = "arial,sans-serif,helvetica";
 
 
-//UserLogin userLogin = new UserLogin();
+
+
+//retrieve all info needed for user page from database
+UserPage userPage = UserPageDAO.getUserPage(username);
+//set userPage as a session attribute so the include files can use it
+session.setAttribute("userPage", userPage);
 
 
 if (state.equals("1")){
@@ -266,7 +271,7 @@ fromstate = state;
 <html>
 <head>
 <title>Editing <%=username%> &#64; ngumbi.com</title>
-<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="style1.css">
 <style type="text/css">
 <!--
 
@@ -305,25 +310,34 @@ body {
     
     
     <%
-
-    String linkDisplayMode = "0";
-
-    //state 1, display password dialog
+    
+    
+    //set the display mode for the top so it doesn't include the Edit link while in the editor
+    String topDisplayMode = "1";//omits the Edit link
+    
+    //set the display mode for the user links area so it shows links that look like links but are plain text and not clickable
+    String linkDisplayMode = "1";//look like links but are plain text
+    
+    
+    
+    //state 1, display login form with password input
     if (state.equals("1")){
-        linkDisplayMode = "1";//look like links but are plain text
-
+        
+        
         %>
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
             <tr>
                 <td valign="top">
-                    <jsp:include page="user_page_include_top.jsp" />
+                    <jsp:include page="user_page_include_top.jsp" >
+                        <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                    </jsp:include>
                     <jsp:include page="user_page_include_links.jsp" >
                         <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
                     </jsp:include>
                     <jsp:include page="user_page_include_bottom.jsp" />
                 </td>
                 <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
-                    <form name="edit_login" method="post" action="editor.jsp">
+                    <form name="edit_login" method="post" action="editor_NEW.jsp">
                         <p style="text-align: left; padding: 0px 7px;">
                             Username: <b><%=username%></b>
                         </p>
@@ -355,24 +369,29 @@ body {
 
         //state 2, display main edit options
         if (state.equals("2")){
+            
             %>
             <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
                 <tr>
                     <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
                         <jsp:include page="user_page_include_links.jsp" >
                             <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
                         </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
                     </td>
                     <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
                         <div style="text-align: center;">
-                            <a href="editor.jsp?user=<%=username%>&state=3a&fromstate=<%=fromstate%>" >Add a link</a><br>
-                            <a href="editor.jsp?user=<%=username%>&state=3e&fromstate=<%=fromstate%>" >Edit a link</a><br>
-                            <!--<a href="editor.jsp?user=<%=username%>&state=3m&fromstate=<%=fromstate%>" >Move a link</a><br>-->
-                            <a href="editor.jsp?user=<%=username%>&state=3d&fromstate=<%=fromstate%>" >Delete a link</a><br>
-                            <a href="editor.jsp?user=<%=username%>&state=3r&fromstate=<%=fromstate%>" >Rename a category</a>
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=3a&fromstate=<%=fromstate%>" >Add a link</a><br>
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=3e&fromstate=<%=fromstate%>" >Edit a link</a><br>
+                            <!--<a href="editor_NEW.jsp?user=<%=username%>&state=3m&fromstate=<%=fromstate%>" >Move a link</a><br>-->
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=3d&fromstate=<%=fromstate%>" >Delete a link</a><br>
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=3r&fromstate=<%=fromstate%>" >Rename a category</a>
                             <br>
                             <br>
-                            <a href="editor.jsp?user=<%=username%>&state=3o&fromstate=<%=fromstate%>" >More options</a>
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=3o&fromstate=<%=fromstate%>" >More options</a>
                             <br><br><br>
                             <a href="user/<%=username%>">Exit</a>
                         </div>
@@ -384,26 +403,131 @@ body {
 
         //state 3o, display 'more options', non-basic options
         else if (state.equals("3o")){
+            
             %>
             <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
                 <tr>
                     <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
                         <jsp:include page="user_page_include_links.jsp" >
                             <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
                         </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
                     </td>
                     <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
                         <div style="text-align: center;">
-                            <a href="editor.jsp?user=<%=username%>&state=3g&fromstate=<%=fromstate%>" >Change search option</a>
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=3g&fromstate=<%=fromstate%>" >Change search option</a>
                             <br><br><br>
-                            <a href="editor.jsp?user=<%=username%>&state=3p&fromstate=<%=fromstate%>" >Change password</a>
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=3p&fromstate=<%=fromstate%>" >Change password</a>
                             <br><br>
-                            <a href="editor.jsp?user=<%=username%>&state=3dj&fromstate=<%=fromstate%>" >Delete my account</a>
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=3dj&fromstate=<%=fromstate%>" >Delete my account</a>
                             <br><br><br>
-                            <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Back to main options</a>
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Back to main options</a>
                             <br><br>
                             <a href="user/<%=username%>">Exit</a>
                         </div>
+                    </td>
+                </tr>
+            </table>
+            <%
+        }
+        
+        //state 3a, display add a link dialog and form
+        else if (state.equals("3a") || state.equals("3a_1")){
+            
+            %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
+                <tr>
+                    <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_links.jsp" >
+                            <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
+                    </td>
+                    <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+            <%
+            
+            if (state.equals("3a_1")){
+                //adding link was unsuccessful
+                %>
+                <span style="color: red;">
+                    Unsuccessful. Either you attempted to use invalid characters or
+                    you've hit the max # of links.
+                </span>
+                <%
+            }
+
+            %>
+            <form name="add" method="post" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
+                New link name: <input name="linknamenew" size="27" maxlength="30">
+                <br>
+                New link URL: <input name="linkurlnew" size="27" maxlength="85">
+                <%
+
+
+
+                //here have radio buttons for each category (and non-category) and a text box for entering a new category name
+
+
+
+                %>
+                <hr size="1" width="66%" align="center">
+                Choose category:
+                <br>
+                <input type="radio" name="catradio" value="" checked>No category<br>
+                <input type="radio" name="catradio" value="null"><input name="catnew" size="22" maxlength="20" value="new category"><br>
+                <%
+                    
+                    
+                
+                    
+                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
+                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
+                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
+                //HERE I SHOULD ADD A MUCH BETTER WAY TO LIST OUT ALL THE CATEGORIES!!!
+                //THERE SHOULD BE A FUNCTION WITHIN THE UserPage THAT RETURNS ALL THE CATEGORIES
+                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
+                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
+                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
+                
+                String[] userCategories = userPage.getCats();
+                for (int i = 0; i < userCategories.length; i++){
+                    if (!userCategories.equals("")){
+                        %><input type="radio" name="catradio" value="<%=userCategories[i]%>"><%=userCategories[i]%><br><%
+                    }
+                }
+                
+
+
+                //here have radio buttons for the row option, default will be add to end but
+                //there will also be, add new row and add to specific row
+                %>
+
+                <input type="hidden" name="user" value="<%=username%>" >
+                <input type="hidden" name="state" value="2" >
+                <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <input type="submit" value="Submit">
+                </div>
+            </form>
+
+            <!--set focus in javascript-->
+            <script type="text/javascript"><!--
+            document.add.linknamenew.focus();
+            //--></script>
+
+
+            <p style="text-align: center; padding: 30px 7px;">
+                <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+            </p>
+            
+            
                     </td>
                 </tr>
             </table>
@@ -439,7 +563,7 @@ body {
 <html>
 <head>
 <title>Editing <%=username%> &#64; ngumbi.com</title>
-<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="style1.css">
 <style type="text/css">
 <!--
 
@@ -531,7 +655,7 @@ else {
     /*
     states & rules:
 
-    state 1- they clicked edit on their jumpstation, take them to editor.jsp with username passed, which will
+    state 1- they clicked edit on their jumpstation, take them to editor_NEW.jsp with username passed, which will
     be their jumpstation with a yellow column on the right.  State 1 will just have their username and a
     textbox for them to enter their password.
     */
@@ -1528,7 +1652,7 @@ else {
                             //the "encoded" one comes out as %E5%95%8A or some such, for a chinese character, but the one in the link below does not
                             // why not!??? they are both URLEncoded.
                             //URLEncoder.encode(rsInventoryInStock.getString("return_media_desc"), "UTF-8")
-                            %><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                         }
                         else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                             if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -1563,7 +1687,7 @@ else {
                                     fromstate = state;
                                     String state3 = "";
                                     state3 = state+"_1";
-                                    %><a href="editor.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
+                                    %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
                             }
                             else { //print category name normally
                                     %><%=currCat%><%
@@ -1576,7 +1700,7 @@ else {
                                     String state2 = "";
                                     if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
                                     else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted		
-                                    %><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                    %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                             }
                             else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                                     if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -1629,7 +1753,7 @@ else {
                                             fromstate = state;
                                             String state3 = "";
                                             state3 = state+"_1";
-                                            %><a href="editor.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
+                                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
                                     }
                                     else { //print category normally
                                             %><%=currCat%><%
@@ -1643,7 +1767,7 @@ else {
                                             if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
                                             else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted		
                                             %>
-                                            <a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                            <a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                                     }
                                     else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                                             if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -1675,7 +1799,7 @@ else {
                                             fromstate = state;
                                             String state3 = "";
                                             state3 = state+"_1";
-                                            %><a href="editor.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
+                                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state3%>&fromstate=<%=fromstate%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>"><%=currCat%></a><%
                                     }
                                     else { //print category normally
                                             %><%=currCat%><%
@@ -1691,7 +1815,7 @@ else {
                                             else if (state.equals("3d")){ 
                                                 state2 = "2"; // go back to state 2, link will be deleted		
                                             }
-                                            %><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                                     }
                                     else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                                             if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -1737,7 +1861,7 @@ else {
                                             String state2 = "";
                                             if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
                                             else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted	
-                                            %><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                                     }
                                     else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                                         if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -1777,7 +1901,7 @@ else {
                                             else if (state.equals("3d")){ 
                                                 state2 = "2";//go back to state 2, link will be deleted	
                                             }		
-                                            %><a href="editor.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                                     }
                                     else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                                             if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -1849,7 +1973,7 @@ else {
             //state 1, display password dialog
             if (state.equals("1")){
                 %>
-                <form name="edit_login" method="post" action="editor.jsp">
+                <form name="edit_login" method="post" action="editor_NEW.jsp">
                     <p style="text-align: left; padding: 0px 7px;">
                         Username: <b><%=username%></b>
                     </p>
@@ -1870,7 +1994,7 @@ else {
 
                 <!--set focus in javascript-->
                 <script type="text/javascript"><!--
-                    document.edit_login.pass.focus();
+                    //document.edit_login.pass.focus();
                 //--></script>
                 <%
             }
@@ -1879,15 +2003,15 @@ else {
             else if (state.equals("2")){
                 %>
                 <div style="text-align: center;">
-                    <a href="editor.jsp?user=<%=username%>&state=3a&fromstate=<%=fromstate%>" >Add a link</a><br>
-                    <a href="editor.jsp?user=<%=username%>&state=3e&fromstate=<%=fromstate%>" >Edit a link</a><br>
-                    <!--<a href="editor.jsp?user=<%=username%>&state=3m&fromstate=<%=fromstate%>" >Move a link</a><br>-->
-                    <a href="editor.jsp?user=<%=username%>&state=3d&fromstate=<%=fromstate%>" >Delete a link</a><br>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=3a&fromstate=<%=fromstate%>" >Add a link</a><br>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=3e&fromstate=<%=fromstate%>" >Edit a link</a><br>
+                    <!--<a href="editor_NEW.jsp?user=<%=username%>&state=3m&fromstate=<%=fromstate%>" >Move a link</a><br>-->
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=3d&fromstate=<%=fromstate%>" >Delete a link</a><br>
                     <!--Move a group<br>-->
-                    <a href="editor.jsp?user=<%=username%>&state=3r&fromstate=<%=fromstate%>" >Rename a category</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=3r&fromstate=<%=fromstate%>" >Rename a category</a>
                     <br>
                     <br>
-                    <a href="editor.jsp?user=<%=username%>&state=3o&fromstate=<%=fromstate%>" >More options</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=3o&fromstate=<%=fromstate%>" >More options</a>
                     <br><br><br>
                     <a href="user/<%=username%>">Exit</a>
                 </div>
@@ -1898,13 +2022,13 @@ else {
             else if (state.equals("3o")){
                 %>
                 <div style="text-align: center;">
-                    <a href="editor.jsp?user=<%=username%>&state=3g&fromstate=<%=fromstate%>" >Change search option</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=3g&fromstate=<%=fromstate%>" >Change search option</a>
                     <br><br><br>
-                    <a href="editor.jsp?user=<%=username%>&state=3p&fromstate=<%=fromstate%>" >Change password</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=3p&fromstate=<%=fromstate%>" >Change password</a>
                     <br><br>
-                    <a href="editor.jsp?user=<%=username%>&state=3dj&fromstate=<%=fromstate%>" >Delete my account</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=3dj&fromstate=<%=fromstate%>" >Delete my account</a>
                     <br><br><br>
-                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Back to main options</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Back to main options</a>
                     <br><br>
                     <a href="user/<%=username%>">Exit</a>
                 </div>
@@ -1913,7 +2037,7 @@ else {
 
             //state 3a, display add a link dialog and form
             else if (state.equals("3a") || state.equals("3a_1")){
-
+                
                 if (state.equals("3a_1")){
                     //adding link was unsuccessful
                     %>
@@ -1925,7 +2049,7 @@ else {
                 }
 
                 %>
-                <form name="add" method="post" action="editor.jsp" enctype="application/x-www-form-urlencoded">
+                <form name="add" method="post" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
                 New link name: <input name=linknamenew SIZE=27 MAXLENGTH=30>
                 <br>
                 New link URL: <input name=linkurlnew SIZE=27 MAXLENGTH=85>
@@ -1977,7 +2101,7 @@ else {
 
 
                 <p style="text-align: center; padding: 30px 7px;">
-                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                 </p>
                 <%
             }
@@ -1989,7 +2113,7 @@ else {
                 Click the link on the left that you want to edit
 
                 <p style="text-align: center; padding: 20px 0px;">
-                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                 </p>
                 <%
             }
@@ -2029,7 +2153,7 @@ else {
                 }
 
                 %>
-                <form name="editl" method="GET" action="editor.jsp" enctype="application/x-www-form-urlencoded">
+                <form name="editl" method="GET" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
                     Link name: <input name=linknamenew SIZE=27 MAXLENGTH=30 value="<%=linkname%>" >
                     <br><br>
                     Link URL: <input name=linkurlnew SIZE=27 MAXLENGTH=85 value="<%=linkurl%>" >
@@ -2044,7 +2168,7 @@ else {
                 </FORM>
 
                 <p style="text-align: center; padding: 20px 0px;">
-                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                 </p>
 
                 <!--set focus in javascript-->
@@ -2060,7 +2184,7 @@ else {
                 Click the link on the left that you want to move
 
                 <p style="text-align: center; padding: 20px 0px;">
-                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                 </p>
                 <%
             }
@@ -2071,7 +2195,7 @@ else {
                 Click the link on the left that you want to delete
 
                 <p style="text-align: center; padding: 20px 0px;">
-                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                 </p>
                 <%
             }
@@ -2082,7 +2206,7 @@ else {
                 Click the category name that you want to rename
 
                 <p style="text-align: center; padding: 20px 0px;">
-                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                 </p>
                 <%
             }
@@ -2101,7 +2225,7 @@ else {
                 }
 
                 %>
-                <form name="editc" method="post" action="editor.jsp" enctype="application/x-www-form-urlencoded">
+                <form name="editc" method="post" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
                     Category name: <input name="catnew" size="20" maxlength=20 value="<%=cat%>" >
                     <input type="hidden" name="cat" value="<%=cat%>" >
                     <input type="hidden" name="user" value="<%=username%>" >
@@ -2113,7 +2237,7 @@ else {
                 </FORM>
 
                 <p style="text-align: center; padding: 20px 0px;">
-                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                 </p>
 
                 <!--set focus in javascript-->
@@ -2163,7 +2287,7 @@ else {
 
                 <%=currSelectionMsg%>
 
-                <form name="editg" method="post" action="editor.jsp">
+                <form name="editg" method="post" action="editor_NEW.jsp">
                     <p>
                         Choose new search options:
                     </p>
@@ -2203,7 +2327,7 @@ else {
                 </FORM>
 
                 <p style="text-align: center; padding: 20px 0px;">
-                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                 </p>
                 <%
             }
@@ -2213,7 +2337,7 @@ else {
 
                 //second page of search options, only for google search choices
                 %>
-                <form name="editg0" method="post" action="editor.jsp">
+                <form name="editg0" method="post" action="editor_NEW.jsp">
 
                     <div style="padding: 15px 0px;">
                         Google URL: <br>
@@ -2316,7 +2440,7 @@ else {
                 </form>
 
                 <div style="text-align: center; ">
-                   <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                   <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                 </div>
                 <%
             }
@@ -2327,7 +2451,7 @@ else {
                     %>
                     <center><p>
 
-                    <form name="editg0" method="post" action="editor.jsp">
+                    <form name="editg0" method="post" action="editor_NEW.jsp">
                     Yahoo! URL: <br>
                     <select name="searchUrl" style="width: 180px;">
                         <%
@@ -2386,7 +2510,7 @@ else {
                     </form>
                     <br><br><br>
 
-                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a><%
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a><%
             }
 
             //state 3p, display boxes to change password
@@ -2400,7 +2524,7 @@ else {
                     }
 
                     %><p>Please enter your new password twice.  It may contain <i>some</i> punctuation characters.
-                    <form name="editp" method="post" action="editor.jsp" enctype="application/x-www-form-urlencoded"> 
+                    <form name="editp" method="post" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded"> 
                     <input type="password" name="pass" size="20" maxlength="30" value="">
                     <input type="password" name="cpass" size="20" maxlength="30" value="">
                     <input type="hidden" name="user" value="<%=username%>" >
@@ -2415,7 +2539,7 @@ else {
                     //--></script>
                     <br><br><br>			
 
-                    <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a><%
+                    <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a><%
 
             }
 
@@ -2423,10 +2547,10 @@ else {
             //state 3dj, display confirmation to delete jumpstation
             else if (state.equals("3dj")){
                 %>You're sure you want to delete your account?
-                <p><a href="editor.jsp?user=<%=username%>&state=2&fromstate=<%=fromstate%>" >Yes</a>
+                <p><a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=<%=fromstate%>" >Yes</a>
                 <br><br><br>
 
-                <a href="editor.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a><%
+                <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a><%
 
             }
 

@@ -58,23 +58,27 @@ public class UserPage {
     }
     
     
-    
-    
-    /*
-    public String getUserPageHtml() {
-        String html = "";
-        
-        //gather user's search option details
-        int searchOption = user.getSearchOption();
-        String searchUrl = user.getSearchUrl();
-        String searchLang = user.getSearchLang();
-        
-        
-        
-        return html;
+    public String[] getCats() {
+        String[] cats = new String[numCats];
+        int indexLinks = 0;
+        int indexCats = 0;
+        while (indexLinks < userLinks.length && indexCats < cats.length){
+            String currCat = userLinks[indexLinks].getCat();
+            if (indexCats == 0){
+                //if first one, just fill in
+                cats[indexCats] = currCat;
+                indexCats++;
+            }
+            else if (!currCat.equals(cats[indexCats-1])){
+                //not first one, and different from previously saved cat.
+                //save as new cat and increment index in cats
+                cats[indexCats] = currCat;
+                indexCats++;
+            }
+            indexLinks++;
+        }
+        return cats;
     }
-    */
-
     
     
     

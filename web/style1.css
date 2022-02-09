@@ -186,3 +186,8 @@ table.optionsnew td {
     border-style: solid dotted;
     border-color: #999999 #dddddd;
 }
+
+
+.user_link {
+    font-size: .8em;
+}

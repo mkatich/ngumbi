@@ -103,7 +103,7 @@ String textColor = "000000";
 String fontFamily = "arial,sans-serif,helvetica";
 %>
 
-<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="style1.css">
 <style type="text/css">
 <!--
 

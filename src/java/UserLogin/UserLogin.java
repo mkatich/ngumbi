@@ -55,10 +55,14 @@ public class UserLogin implements HttpSessionBindingListener {
             //if this throws an exception, then it's because the session is already invalidated and we can't get that info.
         }
         
-        if (this.username.equals("")){
+        if (this.username == null){
+            //I think the user session no longer exists
+            //    this.logLogoutToServerLog("session invalid, null userId");
+        }
+        else if (this.username.equals("")){
             //I think this one is hit if the user accessed a URL, but is not logged in.
             //perhaps a new session is started after logging in and this one is closed
-            //    this.logLogoutToServerLog("session ended, blank userId");
+            //    this.logLogoutToServerLog("session invalid, blank userId");
         }
         else if (sessionLastAccessedTime != 0 && nowTime - sessionLastAccessedTime >= userMaxInactiveInterval){
             //session must have timed out from inactivity, which logged out a user

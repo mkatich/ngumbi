@@ -31,7 +31,7 @@ String searchLangYahoo = request.getParameter("searchLangYahoo");
 <head>
 <title>New ngumbi Page</title>
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="style1.css">
 <style type="text/css">
 <!--
 

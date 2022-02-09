@@ -4,7 +4,7 @@
 <head>
     <title>ngumbi.com</title>
     <meta http-equiv="content-type" content="text/html;charset=utf-8">
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="style1.css">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <jsp:include page="inc_google_analytics.jsp" />

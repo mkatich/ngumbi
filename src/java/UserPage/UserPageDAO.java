@@ -43,7 +43,7 @@ public class UserPageDAO {
             PreparedStatement psUserData = null;
             ResultSet rsUserData = null;
             
-            //get user links
+            //get user links - only perform this if we can find user
             String qUserLinks = ""
                     + "SELECT "
                     + "ul.user_link_id AS user_link_id, "
@@ -56,7 +56,7 @@ public class UserPageDAO {
                     + "ul.link_rank AS link_rank "
                     + "FROM user_links ul LEFT JOIN users u ON (ul.user_id = u.user_id) "
                     + "WHERE u.username = ? "
-                    + "ORDER BY cat_rank, sub_cat_rank, link_rank";
+                    + "ORDER BY cat_rank ASC, sub_cat_rank ASC, link_rank ASC";
             PreparedStatement psUserLinks = null;
             ResultSet rsUserLinks = null;
             
@@ -74,7 +74,10 @@ public class UserPageDAO {
                     //create User component of UserPage
                     User user = null;
                     
+                    boolean haveUserData = false;
                     if (rsUserData.next()){
+                        haveUserData = true;
+                        
                         int userId1 = rsUserData.getInt("user_id");
                         String pass = rsUserData.getString("pass");
                         int searchOption = rsUserData.getInt("searchOption");
@@ -90,47 +93,47 @@ public class UserPageDAO {
                         //update the last viewed value in users table
                         //checks reporting turned on, then adds entry to history table for this view, while deleting oldest entry
                         helperMethods.adminUpdate(username, "view");
-                    }
+                        
+                        //get user links
+                        psUserLinks = conn.prepareStatement(qUserLinks);
+                        psUserLinks.setString(1, username);
+                        rsUserLinks = psUserLinks.executeQuery();
 
-                    //get user links
-                    psUserLinks = conn.prepareStatement(qUserLinks);
-                    psUserLinks.setString(1, username);
-                    rsUserLinks = psUserLinks.executeQuery();
-                    
-                    //create UserLink list to hold results initially when iterating array component of UserPage
-                    List<UserLink> userLinksList = new ArrayList<>();
-                    
-                    //int countUserLinks = 0;
-                    int countCats = 0;//used for counting categories
-                    String lastCat = "";//used for counting categories
-                    while (rsUserLinks.next()){
-                        int userLinkId = rsUserLinks.getInt("user_link_id");
-                        int userId2 = rsUserLinks.getInt("user_id");
-                        String linkName = rsUserLinks.getString("link_name");
-                        String linkAddress = rsUserLinks.getString("link_address");
-                        String cat = rsUserLinks.getString("cat");
-                        int catRank = rsUserLinks.getInt("cat_rank");
-                        int subCatRank = rsUserLinks.getInt("sub_cat_rank");
-                        int linkRank = rsUserLinks.getInt("link_rank");
-                        
-                        UserLink currUserLink = new UserLink(userLinkId, userId2, linkName, linkAddress, cat, catRank, subCatRank, linkRank);
-                        
-                        userLinksList.add(currUserLink);
-                        //userLinks[countUserLinks] = currUserLink;
-                        
-                        //countUserLinks++;
-                        if (!(cat.equals(lastCat))){
-                            countCats++;
+                        //create UserLink list to hold results initially when iterating array component of UserPage
+                        List<UserLink> userLinksList = new ArrayList<>();
+
+                        //int countUserLinks = 0;
+                        int countCats = 0;//used for counting categories
+                        String lastCat = "";//used for counting categories
+                        while (rsUserLinks.next()){
+                            int userLinkId = rsUserLinks.getInt("user_link_id");
+                            int userId2 = rsUserLinks.getInt("user_id");
+                            String linkName = rsUserLinks.getString("link_name");
+                            String linkAddress = rsUserLinks.getString("link_address");
+                            String cat = rsUserLinks.getString("cat");
+                            int catRank = rsUserLinks.getInt("cat_rank");
+                            int subCatRank = rsUserLinks.getInt("sub_cat_rank");
+                            int linkRank = rsUserLinks.getInt("link_rank");
+
+                            UserLink currUserLink = new UserLink(userLinkId, userId2, linkName, linkAddress, cat, catRank, subCatRank, linkRank);
+
+                            userLinksList.add(currUserLink);
+                            //userLinks[countUserLinks] = currUserLink;
+
+                            //countUserLinks++;
+                            if (!(cat.equals(lastCat))){
+                                countCats++;
+                            }
+                            lastCat = cat;
                         }
-                        lastCat = cat;
-                    }
-                    
-                    //create UserLink array component of UserPage - convert the list gathered above
-                    UserLink[] userLinks = userLinksList.toArray(new UserLink[userLinksList.size()]);
-                    
-                    //put the user data and user links array together into UserPage object
-                    userPage = new UserPage(user, userLinks, countCats);
 
+                        //create UserLink array component of UserPage - convert the list gathered above
+                        UserLink[] userLinks = userLinksList.toArray(new UserLink[userLinksList.size()]);
+
+                        //put the user data and user links array together into UserPage object
+                        userPage = new UserPage(user, userLinks, countCats);
+                        
+                    }
                 }
             }
             catch (SQLException e) {

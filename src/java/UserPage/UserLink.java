@@ -107,8 +107,8 @@ public class UserLink {
                 linkHtml = "<a href=\""+this.linkAddress+"\" class=\"user_link\">"+this.linkName.replace('+',' ')+"</a>";
                 break;
             case 1:
-                String linkColor = "#0000cc";
-                linkHtml = "<font color=\""+linkColor+"\"><u>"+this.linkName+"</u></font>";
+                String linkColorCss = "color: #0000cc;";
+                linkHtml = "<span style=\""+linkColorCss+"\" class=\"user_link\"><u>"+this.linkName+"</u></span>";
                 break;
             case 2:
                 break;
