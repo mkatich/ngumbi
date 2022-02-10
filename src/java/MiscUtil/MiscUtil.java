@@ -8,6 +8,8 @@
  */
 package MiscUtil;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -72,6 +74,169 @@ public class MiscUtil {
         int numDays = (int)(timeInterval/twentyFourHrs);
         return numDays;
     }
+
+    public static String addLinkAddressPrefixAsNeeded(String linkAddress) {
+        if (linkAddress.length() == 7){
+            if (! (linkAddress.substring(0,7).equals("http://")) ){
+                //no 'http://' or 'https://'
+                if (!linkAddress.substring(0,4).equals("www.")){
+                    //no 'www.' or 'http://'
+                    linkAddress = "http://www.".concat(linkAddress);
+                }
+                else {
+                    //has 'www.' but no 'http://'
+                    linkAddress = "http://".concat(linkAddress);
+                }
+            }
+            else {
+                //we do have either http:// or https://, do nothing.
+            }
+        }
+        //do same checks, except this time also check for https:// since it's more than 7 chars
+        else if (linkAddress.length() > 7){
+            if (! (linkAddress.substring(0,7).equals("http://") || linkAddress.substring(0,8).equals("https://")) ){
+                //no 'http://' or 'https://'
+                if (!linkAddress.substring(0,4).equals("www.")){
+                    //no 'www.' or 'http://'
+                    linkAddress = "http://www.".concat(linkAddress);
+                }
+                else {
+                    //has 'www.' but no 'http://'
+                    linkAddress = "http://".concat(linkAddress);
+                }
+            }
+            else {
+                //we do have either http:// or https://, do nothing.
+            }
+        }
+        else {
+            //it's too short, add the http://www. anyway no matter what
+            //if it doesn't work, they get 404 and should fix it themself
+            linkAddress = "http://www.".concat(linkAddress);
+        }
+        return linkAddress;
+    }
+    
+    
+    
+    
+    //do usual preparation for a value from a text input field (excluding prepping newlines which may be in textareas) for SQL insert
+    public static String prepTextInputValForDb(String input){
+        input = input.trim();
+        input = replaceBackslash(input);
+        input = replaceQuote(input);
+        //input = limitNewlines(input);
+        input = replace4ByteChars(input);
+        return input;
+    }
+    //do usual preparation for a value from a text input field (including prepping newlines which may be in textareas)for SQL insert
+    public static String prepTextareaInputValForDb(String input){
+        input = input.trim();
+        input = replaceBackslash(input);
+        input = replaceQuote(input);
+        input = limitNewlines(input);
+        input = replace4ByteChars(input);
+        return input;
+    }
+    
+    //check for single quote, replace ' with \' for mysql, and \\' to escape java so it's properly inserted to DB
+    public static String replaceQuote (String input){
+        //base case
+        if (input == null)
+            return input;
+        else if (input.indexOf('\'') == -1)
+            return input;
+
+        //recursive case
+        else {
+            // (input.indexOf('\'') != -1){ //recursive case
+            return input.substring(0, input.indexOf('\''))+"\\'"+replaceQuote(input.substring(input.indexOf('\'')+1, input.length()));
+        }
+    }
+    //check for backslash, replace \ with \\ for mysql, and \\\\ to escape java so it's properly inserted to DB
+    public static String replaceBackslash (String input){
+        //base case
+        if (input == null)
+            return input;
+        else if (input.indexOf('\\') == -1)
+            return input;
+
+        //recursive case
+        else {
+            // (input.indexOf('\'') != -1){ //recursive case
+            return input.substring(0, input.indexOf('\\'))+"\\\\"+replaceBackslash(input.substring(input.indexOf('\\')+1, input.length()));
+        }
+    }
+    //check for 4-byte characters (characters outside the Basic Multilingual Plane) which can't be saved in MySQL's regular utf8 (requires utf8mb4) and replace with ?
+    public static String replace4ByteChars (String input){
+        //String LAST_3_BYTE_UTF_CHAR = "\uFFFF";
+        if (input == null)
+            return input;
+        else {
+            return input.replaceAll("[^\\u0000-\\uFFFF]", "\uFFFD");//uses regular expression to check for 4-byte chars. Replacement char is "\uFFFD"
+        }
+    }
+    //Method limitNewlines() will replace any instances of 3 or more newlines with just 2 newlines, and trim leading
+    //and trailing newlines. This prevents extra space usage which makes notes and other things harder to read.
+    public static String limitNewlines (String input){
+        String output = input;
+        
+        //starty by replacing all \r\n with just \n for consistency (people on Windows will submit \r\n for their newlines)
+        output = output.replaceAll("\r\n","\n");
+        
+        //check for 3 consecutive newlines and replace with 2, over and over until there aren't any more 3 consecutive newlines
+        while (output.contains("\n\n\n"))
+            output = output.replaceAll("\n\n\n","\n\n");//replace 3 newlines with just 2 newlines
+        
+        //trim any newlines at beginning and end
+        output = output.trim();
+        return output;
+    }
+    
+    
+    
+    
+    public static boolean isValidURI(String input) {
+        
+        Set<String> protocols, protocolsWithHost;
+        protocolsWithHost = new HashSet<>( 
+            Arrays.asList( new String[]{ "file", "ftp", "http", "https" } ) 
+        );
+        protocols = new HashSet<>( 
+            Arrays.asList( new String[]{ "mailto", "news", "urn" } ) 
+        );
+        protocols.addAll(protocolsWithHost);
+        
+        int colon = input.indexOf(':');
+        if (colon < 3)
+            return false;
+
+        String proto = input.substring(0, colon).toLowerCase();
+        if (!protocols.contains(proto))
+            return false;
+
+        try {
+            URI uri = new URI(input);
+            if (protocolsWithHost.contains(proto)) {
+                if (uri.getHost() == null)
+                    return false;
+                
+                String path = uri.getPath();
+                if (path != null) {
+                    for (int i=path.length()-1; i >= 0; i--) {
+                        if ("?<>:*|\"".indexOf( path.charAt(i) ) > -1)
+                            return false;
+                    }
+                }
+            }
+            
+            return true;
+        } 
+        catch ( URISyntaxException ex ) {}
+
+        return false;
+    }
+    
     
     
 }

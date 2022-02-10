@@ -55,8 +55,7 @@ Explanation of states of the user interface.
 
 <jsp:useBean id="logon" scope="session" class="logonBean.logon" />
 <jsp:useBean id="helperMethods" scope="page" class="helperMethodsBean.helperMethods" />
-
-
+<%@page import="MiscUtil.MiscUtil"%>
 
 <%
 //set coding to UTF-8 before getting parameters
@@ -256,14 +255,14 @@ else {
                         if (fromstate.equals("3a") || fromstate.equals("3a_1") || fromstate.equals("3a_2")){
 
                             //here replace any single quote, space, double quote, etc for saving in MySQL
-                            catradio = helperMethods.replaceBackslash(catradio);
-                            catnew = helperMethods.replaceBackslash(catnew);
-                            linknamenew = helperMethods.replaceBackslash(linknamenew);
-                            linkurlnew = helperMethods.replaceBackslash(linkurlnew);
-                            catradio = helperMethods.replaceQuote(catradio);
-                            catnew = helperMethods.replaceQuote(catnew);
-                            linknamenew = helperMethods.replaceQuote(linknamenew);
-                            linkurlnew = helperMethods.replaceQuote(linkurlnew);
+                            catradio = MiscUtil.replaceBackslash(catradio);
+                            catnew = MiscUtil.replaceBackslash(catnew);
+                            linknamenew = MiscUtil.replaceBackslash(linknamenew);
+                            linkurlnew = MiscUtil.replaceBackslash(linkurlnew);
+                            catradio = MiscUtil.replaceQuote(catradio);
+                            catnew = MiscUtil.replaceQuote(catnew);
+                            linknamenew = MiscUtil.replaceQuote(linknamenew);
+                            linkurlnew = MiscUtil.replaceQuote(linkurlnew);
 
                             //first check if we need to add http:// or www. or both
                             //length of 7 is first check, if it's longer than 7, need to check for https:// also which is 8 chars
@@ -576,10 +575,10 @@ else {
                             //edit table to modify the link as specified
 
                             //here replace any single quote, space, double quote, etc for saving in MySQL
-                            linknamenew = helperMethods.replaceBackslash(linknamenew);
-                            linkurlnew = helperMethods.replaceBackslash(linkurlnew);
-                            linknamenew = helperMethods.replaceQuote(linknamenew);
-                            linkurlnew = helperMethods.replaceQuote(linkurlnew);
+                            linknamenew = MiscUtil.replaceBackslash(linknamenew);
+                            linkurlnew = MiscUtil.replaceBackslash(linkurlnew);
+                            linknamenew = MiscUtil.replaceQuote(linknamenew);
+                            linkurlnew = MiscUtil.replaceQuote(linkurlnew);
 
                             //first check if we need to add http:// or www. or both
                             if (linkurlnew.length() >= 7){ //prevent index out of bounds if it's too short
@@ -640,8 +639,8 @@ else {
                         else if (fromstate.equals("3d")){
 
                             //here replace any single quote, space, double quote, etc for saving in MySQL
-                            cat = helperMethods.replaceBackslash(cat);
-                            cat = helperMethods.replaceQuote(cat);
+                            cat = MiscUtil.replaceBackslash(cat);
+                            cat = MiscUtil.replaceQuote(cat);
 
 
                             //delete the link they chose
@@ -714,8 +713,8 @@ else {
                                     //where the error came from.
                                     String currLinkName = rsdelcat.getString("link_name");
                                     //here replace any single quote, space, double quote, etc for saving in MySQL
-                                    currLinkName = helperMethods.replaceBackslash(currLinkName);
-                                    currLinkName = helperMethods.replaceQuote(currLinkName);
+                                    currLinkName = MiscUtil.replaceBackslash(currLinkName);
+                                    currLinkName = MiscUtil.replaceQuote(currLinkName);
 
 
                                     numberCatRanks = "UPDATE user_links SET cat_rank = "+dCatRank+" WHERE user_id = "+user_id+" AND link_name = '"+currLinkName+"'";
@@ -783,10 +782,10 @@ else {
                         //From State 3r_1, 3r_2, Rename a Category
                         else if (fromstate.equals("3r_1") || fromstate.equals("3r_2")){ //edit table to modify category name they chose
                             //here replace any single quote, space, double quote, etc for saving in MySQL
-                            cat = helperMethods.replaceBackslash(cat);
-                            catnew = helperMethods.replaceBackslash(catnew);
-                            cat = helperMethods.replaceQuote(cat);
-                            catnew = helperMethods.replaceQuote(catnew);
+                            cat = MiscUtil.replaceBackslash(cat);
+                            catnew = MiscUtil.replaceBackslash(catnew);
+                            cat = MiscUtil.replaceQuote(cat);
+                            catnew = MiscUtil.replaceQuote(catnew);
 
                             //first do checks on what user input for invalid stuff
                             boolean inputCheckOk = true;

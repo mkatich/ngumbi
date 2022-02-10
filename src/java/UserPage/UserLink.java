@@ -101,7 +101,6 @@ public class UserLink {
     }
     public String getDispHtml(int linkDisplayMode){
         String linkHtml = "";
-        
         switch (linkDisplayMode) {
             case 0:
                 linkHtml = "<a href=\""+this.linkAddress+"\" class=\"user_link\">"+this.linkName.replace('+',' ')+"</a>";
@@ -119,7 +118,6 @@ public class UserLink {
             default:
                 break;
         }
-        
         return linkHtml;
     }
     

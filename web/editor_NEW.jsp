@@ -54,6 +54,7 @@ Explanation of states of the user interface.
 <jsp:useBean id="userLogin" class="UserLogin.UserLogin" scope="session" />
 <jsp:useBean id="logon" scope="session" class="logonBean.logon" />
 <jsp:useBean id="helperMethods" scope="page" class="helperMethodsBean.helperMethods" />
+<%@page import="MiscUtil.MiscUtil"%>
 <%
     
 //set coding to UTF-8 before getting parameters
@@ -67,6 +68,15 @@ String state = request.getParameter("state");
 String fromstate = request.getParameter("fromstate");
 
 //get additional params used for editing purposes
+String addlink_linkname = request.getParameter("addlink_linkname");
+String addlink_linkaddress = request.getParameter("addlink_linkaddress");
+String addlink_cat_radio = request.getParameter("addlink_cat_radio");
+String addlink_cat_userspecified = request.getParameter("addlink_cat_userspecified");
+
+
+
+//get additional params used for editing purposes
+//CONTINUED ORIGINAL
 String cat = request.getParameter("cat");
 String catrank = request.getParameter("catrank");
 String subcatrank = request.getParameter("subcatrank");
@@ -94,12 +104,14 @@ String textColor = "000000";
 String fontFamily = "arial,sans-serif,helvetica";
 
 
-
-
 //retrieve all info needed for user page from database
 UserPage userPage = UserPageDAO.getUserPage(username);
 //set userPage as a session attribute so the include files can use it
 session.setAttribute("userPage", userPage);
+
+
+//set error message var that should hold info if an operation failed
+String errMsg = "";
 
 
 if (state.equals("1")){
@@ -113,7 +125,8 @@ else if (state.equals("2")){
     //state 2 - 
     //Main edit screen showing edit options. 
     //If coming from state 1, user has attempted login to get here.
-    //If coming from a state 3-something, user has attempted to make an update.
+    //If coming from a state 3-something, user has attempted to make an update, 
+    //and we need to execute it.
     
     //if user came from state 1, try login
     if (fromstate.equals("1")){
@@ -145,6 +158,27 @@ else if (state.equals("2")){
         
         if (fromstate.equals("3a") || fromstate.equals("3a_1")){
             //From State 3a, 3a_1, Add a Link
+            
+            //get the category. may have been user-entered, or they chose an existing category's radio button
+            //catnew holds value of user-specified new category if any
+            //catradio holds value of category chosen, unless it's the radio for user-specified
+            
+            //try adding link. all input checks, and checks for duplicate
+            String addLinkResultMsg = UserPageDAO.addLink(userPage, addlink_linkname, addlink_linkaddress, addlink_cat_radio, addlink_cat_userspecified);
+            
+            if (!addLinkResultMsg.equals("")){
+                //have an error message and didn't add the link
+                state = "3a_1";
+                errMsg = addLinkResultMsg;
+            }
+            else {
+                //no error. make sure to update the UserPage for display
+                //retrieve all info needed for user page from database
+                userPage = UserPageDAO.getUserPage(username);
+                //set userPage as a session attribute so the include files can use it
+                session.setAttribute("userPage", userPage);
+            }
+            
         }
         else if (fromstate.equals("3e_1") || fromstate.equals("3e_2")){
             //From State 3e_1, 3e_2, Edit a Link
@@ -437,6 +471,17 @@ body {
         //state 3a, display add a link dialog and form
         else if (state.equals("3a") || state.equals("3a_1")){
             
+            String default_addlink_linkname = "";
+            String default_addlink_linkaddress = "";
+            String addErrMsgHtml = "";
+            if (state.equals("3a_1")){
+                default_addlink_linkname = addlink_linkname;
+                default_addlink_linkaddress = addlink_linkaddress;
+                if (!errMsg.equals("")){
+                    addErrMsgHtml = "<span style=\"color: red;\">"+errMsg+"</span>";
+                }
+            }
+            
             %>
             <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
                 <tr>
@@ -450,93 +495,55 @@ body {
                         <jsp:include page="user_page_include_bottom.jsp" />
                     </td>
                     <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
-            <%
-            
-            if (state.equals("3a_1")){
-                //adding link was unsuccessful
-                %>
-                <span style="color: red;">
-                    Unsuccessful. Either you attempted to use invalid characters or
-                    you've hit the max # of links.
-                </span>
-                <%
-            }
+                        
+                        <%=addErrMsgHtml%>
+                        
+                        <form name="add" method="post" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
+                            New link name: <input name="addlink_linkname" size="27" maxlength="30" value="<%=default_addlink_linkname%>">
+                            <br>
+                            New link URL: <input name="addlink_linkaddress" size="27" maxlength="85" value="<%=default_addlink_linkaddress%>">
+                            <hr size="1" width="66%" align="center">
+                            Choose category:
+                            <br>
+                            <input type="radio" name="addlink_cat_radio" value="" checked>No category<br>
+                            <input type="radio" name="addlink_cat_radio" value="_user_specified_new_cat"><input name="addlink_cat_userspecified" size="22" maxlength="20" value="new category"><br>
+                            <%
 
-            %>
-            <form name="add" method="post" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
-                New link name: <input name="linknamenew" size="27" maxlength="30">
-                <br>
-                New link URL: <input name="linkurlnew" size="27" maxlength="85">
-                <%
+                            //list out categories as radio buttons
+                            String[] userCategories = userPage.getCats();
+                            for (int i = 0; i < userCategories.length; i++){
+                                if (!userCategories.equals("")){
+                                    %><input type="radio" name="addlink_cat_radio" value="<%=userCategories[i]%>"><%=userCategories[i]%><br><%
+                                }
+                            }
 
-
-
-                //here have radio buttons for each category (and non-category) and a text box for entering a new category name
-
-
-
-                %>
-                <hr size="1" width="66%" align="center">
-                Choose category:
-                <br>
-                <input type="radio" name="catradio" value="" checked>No category<br>
-                <input type="radio" name="catradio" value="null"><input name="catnew" size="22" maxlength="20" value="new category"><br>
-                <%
-                    
-                    
-                
-                    
-                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
-                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
-                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
-                //HERE I SHOULD ADD A MUCH BETTER WAY TO LIST OUT ALL THE CATEGORIES!!!
-                //THERE SHOULD BE A FUNCTION WITHIN THE UserPage THAT RETURNS ALL THE CATEGORIES
-                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
-                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
-                //LEFT OFF HERE -==+==- LEFT OFF HERE -==+==- LEFT OFF HERE 
-                
-                String[] userCategories = userPage.getCats();
-                for (int i = 0; i < userCategories.length; i++){
-                    if (!userCategories.equals("")){
-                        %><input type="radio" name="catradio" value="<%=userCategories[i]%>"><%=userCategories[i]%><br><%
-                    }
-                }
-                
-
-
-                //here have radio buttons for the row option, default will be add to end but
-                //there will also be, add new row and add to specific row
-                %>
-
-                <input type="hidden" name="user" value="<%=username%>" >
-                <input type="hidden" name="state" value="2" >
-                <input type="hidden" name="fromstate" value="<%=fromstate%>" >
-
-                <div style="text-align: center; margin-top: 20px;">
-                    <input type="submit" value="Submit">
-                </div>
-            </form>
-
-            <!--set focus in javascript-->
-            <script type="text/javascript"><!--
-            document.add.linknamenew.focus();
-            //--></script>
-
-
-            <p style="text-align: center; padding: 30px 7px;">
-                <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
-            </p>
-            
-            
+                            %>
+                            <input type="hidden" name="user" value="<%=username%>" >
+                            <input type="hidden" name="state" value="2" >
+                            <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+                            <div style="text-align: center; margin-top: 20px;">
+                                <input type="submit" value="Submit">
+                            </div>
+                        </form>
+                        
+                        <!--set focus in javascript-->
+                        <script type="text/javascript"><!--
+                            document.add.linknamenew.focus();
+                        //--></script>
+                        
+                        <p style="text-align: center; padding: 30px 7px;">
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                        </p>
+                        
                     </td>
                 </tr>
             </table>
             <%
         }
-
-
-
-
+        
+        
+        
+        
     }
 
 
@@ -715,14 +722,14 @@ else {
                         if (fromstate.equals("3a") || fromstate.equals("3a_1")){
 
                             //here replace any single quote, space, double quote, etc for saving in MySQL
-                            catradio = helperMethods.replaceBackslash(catradio);
-                            catnew = helperMethods.replaceBackslash(catnew);
-                            linknamenew = helperMethods.replaceBackslash(linknamenew);
-                            linkurlnew = helperMethods.replaceBackslash(linkurlnew);
-                            catradio = helperMethods.replaceQuote(catradio);
-                            catnew = helperMethods.replaceQuote(catnew);
-                            linknamenew = helperMethods.replaceQuote(linknamenew);
-                            linkurlnew = helperMethods.replaceQuote(linkurlnew);
+                            catradio = MiscUtil.replaceBackslash(catradio);
+                            catnew = MiscUtil.replaceBackslash(catnew);
+                            linknamenew = MiscUtil.replaceBackslash(linknamenew);
+                            linkurlnew = MiscUtil.replaceBackslash(linkurlnew);
+                            catradio = MiscUtil.replaceQuote(catradio);
+                            catnew = MiscUtil.replaceQuote(catnew);
+                            linknamenew = MiscUtil.replaceQuote(linknamenew);
+                            linkurlnew = MiscUtil.replaceQuote(linkurlnew);
 
                             //first check if we need to add http:// or www. or both
                             //length of 7 is first check, if it's longer than 7, need to check for https:// also which is 8 chars
@@ -982,10 +989,10 @@ else {
                             //edit table to modify the link as specified
 
                             //here replace any single quote, space, double quote, etc for saving in MySQL
-                            linknamenew = helperMethods.replaceBackslash(linknamenew);
-                            linkurlnew = helperMethods.replaceBackslash(linkurlnew);
-                            linknamenew = helperMethods.replaceQuote(linknamenew);
-                            linkurlnew = helperMethods.replaceQuote(linkurlnew);
+                            linknamenew = MiscUtil.replaceBackslash(linknamenew);
+                            linkurlnew = MiscUtil.replaceBackslash(linkurlnew);
+                            linknamenew = MiscUtil.replaceQuote(linknamenew);
+                            linkurlnew = MiscUtil.replaceQuote(linkurlnew);
 
                             //first check if we need to add http:// or www. or both
                             if (linkurlnew.length() >= 7){ //prevent index out of bounds if it's too short
@@ -1046,8 +1053,8 @@ else {
                         else if (fromstate.equals("3d")){
 
                             //here replace any single quote, space, double quote, etc for saving in MySQL
-                            cat = helperMethods.replaceBackslash(cat);
-                            cat = helperMethods.replaceQuote(cat);
+                            cat = MiscUtil.replaceBackslash(cat);
+                            cat = MiscUtil.replaceQuote(cat);
 
 
                             //delete the link they chose
@@ -1120,8 +1127,8 @@ else {
                                     //where the error came from.
                                     String currLinkName = rsdelcat.getString("link_name");
                                     //here replace any single quote, space, double quote, etc for saving in MySQL
-                                    currLinkName = helperMethods.replaceBackslash(currLinkName);
-                                    currLinkName = helperMethods.replaceQuote(currLinkName);
+                                    currLinkName = MiscUtil.replaceBackslash(currLinkName);
+                                    currLinkName = MiscUtil.replaceQuote(currLinkName);
 
 
                                     numberCatRanks = "UPDATE user_links SET cat_rank = "+dCatRank+" WHERE user_id = "+user_id+" AND link_name = '"+currLinkName+"'";
@@ -1189,10 +1196,10 @@ else {
                         //From State 3r_1, 3r_2, Rename a Category
                         else if (fromstate.equals("3r_1") || fromstate.equals("3r_2")){ //edit table to modify category name they chose
                             //here replace any single quote, space, double quote, etc for saving in MySQL
-                            cat = helperMethods.replaceBackslash(cat);
-                            catnew = helperMethods.replaceBackslash(catnew);
-                            cat = helperMethods.replaceQuote(cat);
-                            catnew = helperMethods.replaceQuote(catnew);
+                            cat = MiscUtil.replaceBackslash(cat);
+                            catnew = MiscUtil.replaceBackslash(catnew);
+                            cat = MiscUtil.replaceQuote(cat);
+                            catnew = MiscUtil.replaceQuote(catnew);
 
                             //first do checks on what user input for invalid stuff
                             boolean inputCheckOk = true;
