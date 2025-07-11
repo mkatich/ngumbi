@@ -115,11 +115,52 @@ session.setAttribute("userPage", userPage);
 String errMsg = "";
 
 
+
+//Check if user session is secure. I not, show the login form.
+if (userLogin.isSecure()) {
+    //User is logged in and secure.
+    System.out.println("user session is already secure");
+}
+else if (state.equals("2") && fromstate.equals("1")){
+    //User not secure, but just made login attempt. 
+    //Process login attempt.
+    
+    //Set up UserLogin object with username and password given
+    userLogin.setUsername(username.toLowerCase());
+    userLogin.setPass(pass);
+
+    //Attempt login (if successful this will set secure = true)
+    userLogin = UserLoginDAO.login(userLogin);
+
+    //Check if we had a good login
+    if (userLogin.isSecure()){
+        //Good login
+        //HttpSession session = request.getSession(true);
+        //session.setAttribute("userLogin", userLogin);//UserLoginBean object can be accessed as user
+        System.out.println("good login");
+    }
+    else {
+        //Bad login
+        System.out.println("bad login");
+    }
+    
+}
+else {
+    //User not secure, and did not just make a login attempt.
+    //Set state = 1 so we display login form.
+    state = "1";
+}
+
+
+
+
+//Following block checks for editor actions requested and ready to be executed,
+//and executes them.
 if (state.equals("1")){
     //state 1 - 
     //User clicked edit on their user page. Show login dialog.
     
-    
+    //CAN REMOVE THIS CONDITIONAL
     
 }
 else if (state.equals("2")){
@@ -129,6 +170,9 @@ else if (state.equals("2")){
     //If coming from a state 3-something, user has attempted to make an update, 
     //and we need to execute it.
     
+    
+    
+    /*
     //if user came from state 1, try login
     if (fromstate.equals("1")){
         
@@ -151,6 +195,7 @@ else if (state.equals("2")){
             System.out.println("bad login");
         }
     }
+    */
     
     //here we should be logged in, whether already logged in or just did
     if (userLogin.isSecure() && username.equals(userLogin.getUsername())){
@@ -204,6 +249,19 @@ else if (state.equals("2")){
             }
             
             
+            
+            // LEFT OFF LEFT OFF LEFT OFF HERE NOTES
+            //I just did this
+            //then below I got the editor displaying the links as editor links for hte user to click on
+            //with that message on the right sidebar
+            //next step is to work on the state right after the user clicks one of those links
+            //which would be state 3e_1, for editing the link!
+            
+            //I already implemented UserPageDAO.editLink() and I think that will work
+            //once I get to testing that.
+            
+            
+            //OLD NOTE BELOW
             //LEFT OFF HERE... 
             //JUST IMPLEMENTED UserPageDAO.editLink(), and need to test that works!!
             
@@ -246,14 +304,6 @@ else if (state.equals("2")){
         
         
     }
-    else {
-        //not secure in state 2, must have entered incorrect password
-        //require entering password again
-        state = "1"; 
-    }
-    
-    
-    
     
     
     
@@ -336,6 +386,7 @@ fromstate = state;
 //side. Then make sure the navigation works and log in is registering correctly.
 //Remove all usage of logon.java eventually
 
+//REMOVE ALL USAGE OF LOGON.JAVA EVENTUALLY!!!
 
 
 %>
@@ -578,6 +629,35 @@ body {
             <%
         }
         
+        
+        //state 3e, display message to click on a link to choose which to edit
+        else if (state.equals("3e")){
+            
+            linkDisplayMode = "2";
+            
+            %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
+                <tr>
+                    <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_links.jsp" >
+                            <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
+                            <jsp:param name="editorCurrState" value="<%=state%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
+                    </td>
+                    <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+                        Click the link on the left that you want to edit...
+                        <p style="text-align: center; padding: 20px 0px;">
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+            <%
+        }
         
         
         

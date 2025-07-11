@@ -14,18 +14,28 @@
 <jsp:useBean id="userLogin" class="UserLogin.UserLogin" scope="session" />
 <%
     
-    //gather user details including user links from the userPage 
+    //Gather user details including user links from the userPage 
     //session attribute
     UserPage userPage = (UserPage) session.getAttribute("userPage");
     User user = userPage.getUser();
     UserLink[] userLinks = userPage.getUserLinks();
     
-    //get mode for displaying links - default is 0 and shows regular link
+    //Get mode for displaying links - default is 0 and shows regular link
     String linkDisplayModeStr = request.getParameter("linkDisplayMode");
     int linkDisplayMode = 0;
     if (linkDisplayModeStr != null && linkDisplayModeStr.matches("\\d+")){
         linkDisplayMode = Integer.parseInt(linkDisplayModeStr);
     }
+    
+    //Get Editor current state, if applicable
+    String editorCurrState = "";
+    if (linkDisplayMode == 2){
+        editorCurrState = request.getParameter("editorCurrState");
+    }
+    
+
+
+System.out.println("user_page_include_links... linkDisplayMode: "+linkDisplayMode+", editorCurrState: "+editorCurrState);
     
     
 %>
@@ -37,8 +47,8 @@
             int catCounter = 0;
             String currCat = "";
             int currSubCatRank = 0;
-            String currLinkAddr = "";
-            String currLinkName = "";
+            //String currLinkAddr = "";
+            //String currLinkName = "";
             String lastCat = "";
             int lastSubCatRank = 0;
             
@@ -53,7 +63,14 @@
                 currSubCatRank = link.getSubCatRank();//of current category and subcategory
                 //currLinkAddr = link.getLinkAddress();
                 //currLinkName = link.getLinkName().replace('+',' ');
+                
+                
                 currLinkHtml = link.getDispHtml(linkDisplayMode);
+                if (!editorCurrState.equals("")){
+                    //We are getting the link for the Editor. Need to add couple parameters.
+                    currLinkHtml = link.getDispHtml(linkDisplayMode, editorCurrState, user.getUsername());
+                }
+                
                 
                 //check if first link is a category-less one
                 if (currCat.equals("")){
@@ -90,7 +107,14 @@
                 currSubCatRank = link.getSubCatRank();//of current category and subcategory
                 //currLinkAddr = link.getLinkAddress();
                 //currLinkName = link.getLinkName().replace('+',' ');
+                
+                
                 currLinkHtml = link.getDispHtml(linkDisplayMode);
+                if (!editorCurrState.equals("")){
+                    //We are getting the link for the Editor. Need to add couple parameters.
+                    currLinkHtml = link.getDispHtml(linkDisplayMode, editorCurrState, user.getUsername());
+                }
+                
                 
                 if (!(currCat.equals(lastCat))){
                     //we have a new category so indent accordingly

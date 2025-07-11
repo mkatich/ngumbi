@@ -99,17 +99,33 @@ public class UserLink {
     public String getDispHtml() {
         return getDispHtml(0);
     }
-    public String getDispHtml(int linkDisplayMode){
+    public String getDispHtml(int linkDisplayMode) {
+        return getDispHtml(linkDisplayMode, "", "");
+    }
+    public String getDispHtml(int linkDisplayMode, String editorCurrState, String username){
         String linkHtml = "";
         switch (linkDisplayMode) {
             case 0:
+                //Default link mode, used by user page. Displays a normal clickable link.
                 linkHtml = "<a href=\""+this.linkAddress+"\" class=\"user_link\">"+this.linkName.replace('+',' ')+"</a>";
                 break;
             case 1:
+                //This mode displays an unclickable link and is used for display when viewing Editor.
                 String linkColorCss = "color: #0000cc;";
                 linkHtml = "<span style=\""+linkColorCss+"\" class=\"user_link\"><u>"+this.linkName+"</u></span>";
                 break;
             case 2:
+                //This mode displays a clickable link meant for use within Editor for user to choose a link. This
+                //identifies the link for the next part of the editing process. 
+                //This one is for editing a link (3e)
+                String editorNextState = editorCurrState+"_1";
+                linkHtml = ""
+                        + "<a "
+                        + "href=\"editor_NEW.jsp?user="+username+"&state="+editorNextState+"&fromstate="+editorCurrState+"&selected_user_link_id="+this.userLinkId+"&cat="+this.cat+"&sub_cat_rank="+this.subCatRank+"\" "
+                        + "class=\"user_link\">"
+                        + this.linkName
+                        + "</a>";
+                
                 break;
             case 3:
                 break;
