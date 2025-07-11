@@ -158,14 +158,81 @@ public class UserPageDAO {
     
     
     
+    
+    
+    public static UserLink getUserLink(String userLinkId) {
+        UserLink userLink = null;
+        
+        //get user link data
+        String qUserLink = ""
+                + "SELECT "
+                + "user_link_id, "
+                + "user_id, "
+                + "link_name, "
+                + "link_address, "
+                + "cat, "
+                + "cat_rank, "
+                + "sub_cat_rank, "
+                + "link_rank "
+                + "FROM user_links "
+                + "WHERE user_link_id = ? ";
+        PreparedStatement psUserLink = null;
+        ResultSet rsUserLink = null;
+
+        Connection conn = null;
+        try {
+            conn = DbConnectionPool.getConnection();//fetch a connection
+            if (conn != null){
+                //perform queries
+
+                //get user data (metadata, not links)
+                psUserLink = conn.prepareStatement(qUserLink);
+                psUserLink.setString(1, userLinkId);
+                rsUserLink = psUserLink.executeQuery();
+
+                boolean haveUserLinkData = false;
+                if (rsUserLink.next()){
+                    haveUserLinkData = true;
+                    
+                    int userId = rsUserLink.getInt("user_id");
+                    String linkName = rsUserLink.getString("link_name");
+                    String linkAddress = rsUserLink.getString("link_address");
+                    String cat = rsUserLink.getString("cat");
+                    int catRank = rsUserLink.getInt("cat_rank");
+                    int subCatRank = rsUserLink.getInt("sub_cat_rank");
+                    int linkRank = rsUserLink.getInt("link_rank");
+                    
+                    int userLinkIdInt = Integer.parseInt(userLinkId);
+
+                    userLink = new UserLink(userLinkIdInt, userId, linkName, linkAddress, cat, catRank, subCatRank, linkRank);
+                    
+                }
+            }
+        }
+        catch (SQLException e) {
+            DbConnectionPool.outputException(e, "UserPageDAO.getUserLink()", 
+                    new String[]{"qUserLink", qUserLink});
+            //errorMsg = "There was an error retrieving your page.";
+        }
+        finally {
+            DbConnectionPool.closeResultSet(rsUserLink);
+            DbConnectionPool.closeStatement(psUserLink);
+            DbConnectionPool.closeConnection(conn);
+        }
+        
+        return userLink;
+        
+    }
+    
+    
+    
     //addLink() attempts to add a new link for a user. This takes params from
     //the editor and does all needed input checks, figures out category.
     //Returns empty string if successful. If not successful, returns message String
     public static String addLink(UserPage userPage, String linkName, String linkAddress, String catRadio, String catUserSpecified) {
         String errorMsg = "";
         
-        System.out.println("UserPageDAO.addLink() 1 - linkName: "+linkName+", linkAddress: "+linkAddress+", catRadio: "+catRadio+", catUserSpecified: "+catUserSpecified);
-        
+        //System.out.println("UserPageDAO.addLink() 1 - linkName: "+linkName+", linkAddress: "+linkAddress+", catRadio: "+catRadio+", catUserSpecified: "+catUserSpecified);
         
         //do some escaping first
         linkName = MiscUtil.prepTextInputValForDb(linkName);
@@ -194,8 +261,7 @@ public class UserPageDAO {
             }
         }
         
-        
-        System.out.println("UserPageDAO.addLink() 2 - cat: "+cat);
+        //System.out.println("UserPageDAO.addLink() 2 - cat: "+cat);
         
         //begin input checking
         //do some further validity checks of link name, address, category
@@ -234,11 +300,9 @@ public class UserPageDAO {
             errorMsg = "New category is invalid";
         } 
         
-        System.out.println("UserPageDAO.addLink() 3 - inputCheckOk: "+inputCheckOk+", errorMsg: "+errorMsg);
-        
+        //System.out.println("UserPageDAO.addLink() 3 - inputCheckOk: "+inputCheckOk+", errorMsg: "+errorMsg);
         
         if (inputCheckOk){
-
 
             //next we'll compare number of user links with admin max links and 
             //we need to make database connection so start that
@@ -248,8 +312,12 @@ public class UserPageDAO {
             ResultSet rsAdminMaxLinks = null;
             int adminMaxLinks = -1;
             
-            //init update stuff for if we do add the link
-            String updateAddLink = "";
+            //init SQL update stuff for if we do add the link
+            String updateAddLink = ""
+                    + "INSERT INTO user_links "
+                    + "(user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) "
+                    + "VALUES "
+                    + "(?, ?, ?, ?, ?, ?, ?)";
             PreparedStatement psAddLink = null;
 
             Connection conn = null;
@@ -269,8 +337,7 @@ public class UserPageDAO {
                         }
                     }
                     
-                    
-        System.out.println("UserPageDAO.addLink() 4 - adminMaxLinks: "+adminMaxLinks+", userPage.getNumLinks(): "+userPage.getNumLinks()+", numLinksOk: "+numLinksOk);
+                    //System.out.println("UserPageDAO.addLink() 4 - adminMaxLinks: "+adminMaxLinks+", userPage.getNumLinks(): "+userPage.getNumLinks()+", numLinksOk: "+numLinksOk);
                     
                     if (numLinksOk){
                         
@@ -293,19 +360,6 @@ public class UserPageDAO {
                             int lastCatRank = userPage.getMaxCatRank();
                             catRank = lastCatRank + 1;
                             
-                            /*String queryLastCatRank = "SELECT MAX(cat_rank) AS max_cat_rank FROM user_links where user_id = ? ";
-                            PreparedStatement psLastCatRank = null;
-                            ResultSet rsLastCatRank = null;
-                            int lastCatRank = -1;
-                            
-                            psLastCatRank = conn.prepareStatement(queryLastCatRank);
-                            psLastCatRank.setInt(1, userPage.getUserId());
-                            rsLastCatRank = psLastCatRank.executeQuery();
-                            if (rsLastCatRank.next()){
-                                lastCatRank = rsLastCatRank.getInt("max_cat_rank");
-                                catRank = lastCatRank + 1;
-                            }*/
-                            
                         }
                         else {
                             //it's an existing category (including blank category)
@@ -317,31 +371,9 @@ public class UserPageDAO {
                             catRank = lastLinkInCat.getCatRank();
                             linkRank = lastLinkInCat.getLinkRank() + 1;
                             
-                            /*
-                            String queryLastLinkGivenCat = ""
-                                    + "SELECT "
-                                    + "cat, cat_rank, sub_cat_rank, link_rank "
-                                    + "FROM user_links "
-                                    + "WHERE "
-                                    + "user_id = ? "
-                                    + "AND cat = ? "
-                                    + "ORDER BY link_rank DESC"
-                                    + "";
-                            */
                         }
                         
-                        
-        System.out.println("UserPageDAO.addLink() 5 - catRank: "+catRank+", linkRank: "+linkRank);
-                        
-                        //now we have the details of the link to add. add it.
-                        updateAddLink = ""
-                                + "INSERT INTO user_links "
-                                + "(user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) "
-                                + "VALUES "
-                                + "(?, ?, ?, ?, ?, ?, ?)";
-                        
-                        //String addLink = "INSERT INTO user_links (user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) 
-                        //VALUES ("+user_id+", '"+linknamenew+"','"+linkurlnew+"','"+catnew+"',"+catrankInt+","+subcatrankInt+","+linkrankInt+")";
+                        //System.out.println("UserPageDAO.addLink() 5 - catRank: "+catRank+", linkRank: "+linkRank);
                         
 			psAddLink = conn.prepareStatement(updateAddLink);
 			psAddLink.setInt(1, userPage.getUserId());
@@ -351,7 +383,7 @@ public class UserPageDAO {
 			psAddLink.setInt(5, catRank);
 			psAddLink.setInt(6, subCatRank);
 			psAddLink.setInt(7, linkRank);
-        System.out.println("UserPageDAO.addLink() 6 - updateAddLink: "+psAddLink.toString());
+                        //System.out.println("UserPageDAO.addLink() 6 - updateAddLink: "+psAddLink.toString());
 			psAddLink.executeUpdate();
                         
                         //		**ADMIN UPDATE**
@@ -380,6 +412,97 @@ public class UserPageDAO {
         return errorMsg;
     }
     
+    
+    //editLink() attempts to edit an existing link for a user, adjusting 
+    //either or both of the link name and link URL. This takes params from
+    //the editor and does all needed input checks.
+    //Returns empty string if successful. If not successful, returns message String
+    public static String editLink(UserPage userPage, String selected_user_link_id, String linkName, String linkAddress) {
+        String errorMsg = "";
+        
+        System.out.println("UserPageDAO.editLink() 1 - linkName: "+linkName+", linkAddress: "+linkAddress);
+        
+        //do some escaping first
+        linkName = MiscUtil.prepTextInputValForDb(linkName);
+        linkAddress = MiscUtil.prepTextInputValForDb(linkAddress);
+        
+        //check linkAddress and add http:// or www. as needed
+        linkAddress = MiscUtil.addLinkAddressPrefixAsNeeded(linkAddress);
+        
+        System.out.println("UserPageDAO.editLink() 2 - linkName: "+linkName+", linkAddress: "+linkAddress);
+        
+        //begin input checking
+        //do some further validity checks of link name, address
+        boolean inputCheckOk = true;
+        if (linkName.equals("")){ 
+            inputCheckOk = false; 
+            errorMsg = "New link name is empty";
+        }
+        if (linkName.contains("\"")){ 
+            inputCheckOk = false;
+            errorMsg = "Please remove the quote from new link name";
+        }
+        if (linkAddress.equals("") || linkAddress.equals("null")){ 
+            inputCheckOk = false; 
+            errorMsg = "New link name is empty";
+        }
+        if (linkAddress.contains("\"")){ 
+            inputCheckOk = false;
+            errorMsg = "Please remove the quote from new link URL";
+        }
+        if (!MiscUtil.isValidURI(linkAddress)){ 
+            inputCheckOk = false;
+            errorMsg = "New link URL is invalid";
+        }
+        
+        System.out.println("UserPageDAO.editLink() 3 - inputCheckOk: "+inputCheckOk+", errorMsg: "+errorMsg);
+        
+        if (inputCheckOk){
+            
+            //init SQL update stuff for if we do add the link
+            String updateEditLink = ""
+                    + "UPDATE user_links "
+                    + "SET "
+                    + "link_name = ?, "
+                    + "link_address = ? "
+                    + "WHERE user_link_id = ? ";
+            PreparedStatement psEditLink = null;
+
+            Connection conn = null;
+            try {
+                conn = DbConnectionPool.getConnection();//fetch a connection
+                if (conn != null){
+                    //perform queries/updates
+                    
+                    //System.out.println("UserPageDAO.addLink() 4 - adminMaxLinks: "+adminMaxLinks+", userPage.getNumLinks(): "+userPage.getNumLinks()+", numLinksOk: "+numLinksOk);
+                    
+                    psEditLink = conn.prepareStatement(updateEditLink);
+                    psEditLink.setString(1, linkName);
+                    psEditLink.setString(2, linkAddress);
+                    psEditLink.setString(3, selected_user_link_id);
+                    //System.out.println("UserPageDAO.addLink() 6 - updateAddLink: "+psAddLink.toString());
+                    psEditLink.executeUpdate();
+
+                    //		**ADMIN UPDATE**
+                    helperMethods.adminUpdate(userPage.getUsername(), "edit Edit");
+
+                }
+            }
+            catch (SQLException e) {
+                DbConnectionPool.outputException(e, "UserPageDAO.editLink()", 
+                        new String[]{"updateEditLink", updateEditLink}
+                        );
+                errorMsg = "Unknown error editing link";
+            }
+            finally {
+                DbConnectionPool.closeStatement(psEditLink);
+                DbConnectionPool.closeConnection(conn);
+            }
+            
+        }
+        
+        return errorMsg;
+    }
     
     
     
