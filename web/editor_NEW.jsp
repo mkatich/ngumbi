@@ -72,17 +72,18 @@ String addlink_linkname = request.getParameter("addlink_linkname");
 String addlink_linkaddress = request.getParameter("addlink_linkaddress");
 String addlink_cat_radio = request.getParameter("addlink_cat_radio");
 String addlink_cat_userspecified = request.getParameter("addlink_cat_userspecified");
-
+String selected_user_link_id = request.getParameter("selected_user_link_id");
+String editlink_linkname = request.getParameter("editlink_linkname");
+String editlink_linkaddress = request.getParameter("editlink_linkaddress");
 
 
 //get additional params used for editing purposes
-//CONTINUED ORIGINAL
+//CONTINUED ORIGINAL, DELETE THESE EVENTUALLY, WHAT'S LEFT AND NOT ABOVE
 String cat = request.getParameter("cat");
 String catrank = request.getParameter("catrank");
 String subcatrank = request.getParameter("subcatrank");
 String linkrank = request.getParameter("linkrank");
 String linkurl = request.getParameter("linkurl");
-String user_link_id = request.getParameter("user_link_id");
 String linkname = request.getParameter("linkname"); //used to identify link that was clicked
 String catnew = request.getParameter("catnew"); //new category name that was entered
 String linkurlnew = request.getParameter("linkurlnew"); //new URL that was entered
@@ -157,31 +158,67 @@ else if (state.equals("2")){
         
         
         if (fromstate.equals("3a") || fromstate.equals("3a_1")){
-            //From State 3a, 3a_1, Add a Link
+            //From State 3a, 3a_1
+            //Add a Link
             
-            //get the category. may have been user-entered, or they chose an existing category's radio button
-            //catnew holds value of user-specified new category if any
-            //catradio holds value of category chosen, unless it's the radio for user-specified
-            
-            //try adding link. all input checks, and checks for duplicate
+            //Call UserPageDAO.addLink() to add it (does input check, checks for duplicate)
+            //addlink_linkname - user chosen display name for new link
+            //addlink_linkaddress - URL for new link
+            //addlink_cat_radio - user chosen existing category to add new link to 
+            //addlink_cat_userspecified - user entered new category to add new link to (adds category)
             String addLinkResultMsg = UserPageDAO.addLink(userPage, addlink_linkname, addlink_linkaddress, addlink_cat_radio, addlink_cat_userspecified);
             
             if (!addLinkResultMsg.equals("")){
-                //have an error message and didn't add the link
+                //Have an error message and didn't add the link
                 state = "3a_1";
                 errMsg = addLinkResultMsg;
             }
             else {
-                //no error. make sure to update the UserPage for display
-                //retrieve all info needed for user page from database
+                //No error. Update the UserPage for display.
                 userPage = UserPageDAO.getUserPage(username);
-                //set userPage as a session attribute so the include files can use it
+                //Set userPage as a session attribute so the include files can use it
                 session.setAttribute("userPage", userPage);
             }
             
         }
         else if (fromstate.equals("3e_1") || fromstate.equals("3e_2")){
-            //From State 3e_1, 3e_2, Edit a Link
+            //From State 3e_1, 3e_2
+            //Edit a Link
+            
+            //Call UserPageDAO.editLink() to edit it (does input check, checks for duplicate)
+            //selected_user_link_id - the link the user selected for this action
+            //editlink_linkname - user chosen new display name for link
+            //editlink_linkaddress - new URL for link
+            String editLinkResultMsg = UserPageDAO.editLink(userPage, selected_user_link_id, editlink_linkname, editlink_linkaddress);
+            
+            if (!editLinkResultMsg.equals("")){
+                //Have an error message and didn't add the link
+                state = "3e_2";
+                errMsg = editLinkResultMsg;
+            }
+            else {
+                //No error. Update the UserPage for display.
+                userPage = UserPageDAO.getUserPage(username);
+                //Set userPage as a session attribute so the include files can use it
+                session.setAttribute("userPage", userPage);
+            }
+            
+            
+            //LEFT OFF HERE... 
+            //JUST IMPLEMENTED UserPageDAO.editLink(), and need to test that works!!
+            
+            //BUT HAVE A PROBLEM THAT WHEN I CLICK ON 
+            //EDIT A LINK, IT SHOWS THE LOGIN SCREEN. IT DOES THIS BECAUSE THE SECURE CHECK
+            //IS DONE IN state = 2, fromstate = 1
+            //AND THERE ISN'T ACTUALLY ANY SECURE CHECK IN STATE 3e
+            
+            //SO FIGURE THAT OUT.
+            
+            //ON TOP OF THAT, I HAVE TO MAKE SURE THE LINKS DISPLAY WITH THE DIFFERENT METHOD
+            //FOR THIS STATE BECAUSE I WANT THEM TO BE CLICKABLE FOR THE EDIT LINK PURPOSE
+            //AND THE LINKS ALL GO TO EDITOR_NEW.JSP WITH A SPECIFIC STATE AND THE LINK ID IN THE QUERY STRING.
+            
+            
         }
         else if (fromstate.equals("3d")){
             //From State 3d, Delete a Link
@@ -686,21 +723,21 @@ else {
                 String loginQuery = "SELECT pass FROM users WHERE username = '"+username+"'";
                 //execute SQL operations
                 try {
-                        stat4 = conn.createStatement();
-                        rslogincheck = stat4.executeQuery(loginQuery);//gets matching user(s) already in table
+                    stat4 = conn.createStatement();
+                    rslogincheck = stat4.executeQuery(loginQuery);//gets matching user(s) already in table
                 }
                 catch (Exception e) {
-                        //slight possibility that someone gets here if they hack url and use invalid username
-                        out.print("Unable to make connection to production database");
-                        out.print(e);
+                    //slight possibility that someone gets here if they hack url and use invalid username
+                    out.print("Unable to make connection to production database");
+                    out.print(e);
                 }
 
                 //check login info
                 rslogincheck.next();
                 String tablePass = rslogincheck.getString("pass");
                 if (tablePass.equals(pass)){
-                        logon.setUserID(username);
-                        logon.setSecure();
+                    logon.setUserID(username);
+                    logon.setSecure();
                 }
                 rslogincheck.close();
             }
@@ -987,7 +1024,7 @@ else {
                         //From State 3e_1, 3e_2, Edit a Link
                         if (fromstate.equals("3e_1") || fromstate.equals("3e_2")){
                             //edit table to modify the link as specified
-
+                            
                             //here replace any single quote, space, double quote, etc for saving in MySQL
                             linknamenew = MiscUtil.replaceBackslash(linknamenew);
                             linkurlnew = MiscUtil.replaceBackslash(linkurlnew);
@@ -1027,7 +1064,7 @@ else {
                             if (inputCheckOk){
                                 //inputs are ok, not bad characters or dups and there was a change
                                 Statement stat96 = null;
-                                String updateLink = "UPDATE user_links SET link_name = '"+linknamenew+"', link_address = '"+linkurlnew+"' WHERE user_link_id = "+user_link_id;
+                                String updateLink = "UPDATE user_links SET link_name = '"+linknamenew+"', link_address = '"+linkurlnew+"' WHERE user_link_id = "+selected_user_link_id;
                                 //String updateLink = "UPDATE "+user+" SET linkname = '"+linknamenew+"', link = '"+linkurlnew+"' WHERE link = '"+linkurl+"'";
                                 try {
                                     stat96 = conn.createStatement();
@@ -1059,7 +1096,7 @@ else {
 
                             //delete the link they chose
                             Statement stat97 = null;
-                            String deleteLink = "DELETE FROM user_links WHERE user_link_id = "+user_link_id;
+                            String deleteLink = "DELETE FROM user_links WHERE user_link_id = "+selected_user_link_id;
                             try {
                                 stat97 = conn.createStatement();
                                 stat97.executeUpdate(deleteLink);
@@ -1659,7 +1696,7 @@ else {
                             //the "encoded" one comes out as %E5%95%8A or some such, for a chinese character, but the one in the link below does not
                             // why not!??? they are both URLEncoded.
                             //URLEncoder.encode(rsInventoryInStock.getString("return_media_desc"), "UTF-8")
-                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&selected_user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                         }
                         else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                             if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -1707,7 +1744,7 @@ else {
                                     String state2 = "";
                                     if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
                                     else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted		
-                                    %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                    %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&selected_user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                             }
                             else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                                     if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -1774,7 +1811,7 @@ else {
                                             if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
                                             else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted		
                                             %>
-                                            <a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                            <a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&selected_user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                                     }
                                     else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                                             if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -1822,7 +1859,7 @@ else {
                                             else if (state.equals("3d")){ 
                                                 state2 = "2"; // go back to state 2, link will be deleted		
                                             }
-                                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&selected_user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                                     }
                                     else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                                             if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -1868,7 +1905,7 @@ else {
                                             String state2 = "";
                                             if (state.equals("3e") || state.equals("3m")){ state2 = state+"_1"; } // go to next step within this option (edit or move link)
                                             else if (state.equals("3d")){ state2 = "2"; } // go back to state 2, link will be deleted	
-                                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&selected_user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                                     }
                                     else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                                         if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -1908,7 +1945,7 @@ else {
                                             else if (state.equals("3d")){ 
                                                 state2 = "2";//go back to state 2, link will be deleted	
                                             }		
-                                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
+                                            %><a href="editor_NEW.jsp?user=<%=username%>&state=<%=state2%>&fromstate=<%=fromstate%>&selected_user_link_id=<%=currLinkId%>&cat=<%=URLEncoder.encode(currCat,"UTF-8")%>&sub_cat_rank=<%=currSubCatRank%>"><%=rs.getString("link_name")%></a>&nbsp;&nbsp;<%
                                     }
                                     else if (state.equals("3m_1")){ //move link, show links as plain text to protect from accidental clicks
                                             if (!rs.getString("link_name").equals(linkname)){ //insert placeholder, it's not adjacent to the link picked to move
@@ -2127,12 +2164,16 @@ else {
 
             //state 3e_1, display text boxes for editing linkname and URL
             else if (state.equals("3e_1") || state.equals("3e_2")){
-
-
+                
+                //Get info for link chosen so we can prefill values into input fields
+                UserLink selectedUserLink = UserPageDAO.getUserLink(selected_user_link_id);
+                String prefill_editlink_linkname = selectedUserLink.getLinkName();
+                String prefill_editlink_linkaddress = selectedUserLink.getLinkAddress();
+                
                 //code to find and display the first links mentioned above
-                Statement stat102 = null;
+                /*Statement stat102 = null;
                 ResultSet rsEditLink = null;
-                String getLinkDetails = "SELECT link_name, link_address FROM user_links WHERE user_link_id = "+user_link_id;
+                String getLinkDetails = "SELECT link_name, link_address FROM user_links WHERE user_link_id = "+selected_user_link_id;
                 try {
                     stat102 = conn.createStatement();
                     rsEditLink = stat102.executeQuery(getLinkDetails);
@@ -2148,8 +2189,8 @@ else {
                     linkurl = rsEditLink.getString("link_address");
                 }
                 rsEditLink.close();
-
-
+                */
+                
                 if (state.equals("3e_2")){ //has unsuccessful attempt for editing link
                     %>
                     <span style="color: red;">
@@ -2161,10 +2202,10 @@ else {
 
                 %>
                 <form name="editl" method="GET" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
-                    Link name: <input name=linknamenew SIZE=27 MAXLENGTH=30 value="<%=linkname%>" >
-                    <br><br>
-                    Link URL: <input name=linkurlnew SIZE=27 MAXLENGTH=85 value="<%=linkurl%>" >
-                    <input type="hidden" name="user"_link_id value="<%=user_link_id%>" >
+                    Link name: <input name="editlink_linkname" size="27" maxlength="30" value="<%=prefill_editlink_linkname%>">
+                    <br>
+                    Link URL: <input name="editlink_linkaddress" size="27" maxlength="85" value="<%=prefill_editlink_linkaddress%>">
+                    <input type="hidden" name="selected_user_link_id" value="<%=selected_user_link_id%>" >
                     <input type="hidden" name="user" value="<%=username%>" >
                     <input type="hidden" name="state" value="2" >
                     <input type="hidden" name="fromstate" value="<%=fromstate%>" >
@@ -2242,7 +2283,7 @@ else {
                         <input type="submit" value="Submit">
                     </div>
                 </FORM>
-
+                
                 <p style="text-align: center; padding: 20px 0px;">
                     <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                 </p>
