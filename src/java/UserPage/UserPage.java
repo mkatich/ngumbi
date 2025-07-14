@@ -122,6 +122,31 @@ public class UserPage {
         return userLinksOneCat;
     }
     
+    //getLinksInCategoryByRank() will return an array of user's links in category defined by catRank
+    public UserLink[] getLinksInCategoryByRank(int catRank) {
+        List<UserLink> userLinksOneCatL = new ArrayList<>();
+        for (int i = 0; i < userLinks.length; i++){
+            if (userLinks[i].getCatRank() == catRank){
+                userLinksOneCatL.add(userLinks[i]);
+            }
+        }
+        UserLink[] userLinksOneCat = userLinksOneCatL.toArray(new UserLink[userLinksOneCatL.size()]);
+        return userLinksOneCat;
+    }
+    
+    //getLinksInSubCategoryByRank() will return an array of user's links in 
+    //sub-category defined by catRank and subCatRank
+    public UserLink[] getLinksInSubCategoryByRank(int catRank, int subCatRank) {
+        List<UserLink> userLinksOneSubCatL = new ArrayList<>();
+        for (int i = 0; i < userLinks.length; i++){
+            if (userLinks[i].getCatRank() == catRank && userLinks[i].getSubCatRank() == subCatRank){
+                userLinksOneSubCatL.add(userLinks[i]);
+            }
+        }
+        UserLink[] userLinksOneSubCat = userLinksOneSubCatL.toArray(new UserLink[userLinksOneSubCatL.size()]);
+        return userLinksOneSubCat;
+    }
+    
     public UserLink getLastLinkInCategory(String cat){
         UserLink[] userLinksOneCat = getLinksInCategory(cat);
         //user links are always in order by catRank first, so we can just get 

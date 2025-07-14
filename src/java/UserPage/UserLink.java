@@ -104,6 +104,7 @@ public class UserLink {
     }
     public String getDispHtml(int linkDisplayMode, String editorCurrState, String username){
         String linkHtml = "";
+        String editorNextState = "";
         switch (linkDisplayMode) {
             case 0:
                 //Default link mode, used by user page. Displays a normal clickable link.
@@ -117,17 +118,28 @@ public class UserLink {
             case 2:
                 //This mode displays a clickable link meant for use within Editor for user to choose a link. This
                 //identifies the link for the next part of the editing process. 
+                //Here, the next state is derived as current state plus "_1" appended.
                 //This one is for editing a link (3e)
-                String editorNextState = editorCurrState+"_1";
+                editorNextState = editorCurrState+"_1";
                 linkHtml = ""
                         + "<a "
                         + "href=\"editor_NEW.jsp?user="+username+"&state="+editorNextState+"&fromstate="+editorCurrState+"&selected_user_link_id="+this.userLinkId+"&cat="+this.cat+"&sub_cat_rank="+this.subCatRank+"\" "
                         + "class=\"user_link\">"
                         + this.linkName
                         + "</a>";
-                
                 break;
             case 3:
+                //This mode displays a clickable link meant for use within Editor for user to choose a link. This
+                //identifies the link for the next part of the editing process. 
+                //Here, the next state is just state 2.
+                //This one is for deleting a link (3d)
+                editorNextState = "2";
+                linkHtml = ""
+                        + "<a "
+                        + "href=\"editor_NEW.jsp?user="+username+"&state="+editorNextState+"&fromstate="+editorCurrState+"&selected_user_link_id="+this.userLinkId+"\" "
+                        + "class=\"user_link\">"
+                        + this.linkName
+                        + "</a>";
                 break;
             case 4:
                 break;

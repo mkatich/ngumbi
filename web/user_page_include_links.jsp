@@ -27,15 +27,18 @@
         linkDisplayMode = Integer.parseInt(linkDisplayModeStr);
     }
     
-    //Get Editor current state, if applicable
+    //Check if we will be making a special link for the editor, like for 
+    //choosing a link to edit or delete. This means we'll call a different 
+    //UserLink.getDispHtml().
+    boolean needSpecialLinkForEditor = false;
     String editorCurrState = "";
-    if (linkDisplayMode == 2){
+    if (linkDisplayMode == 2 || linkDisplayMode == 3){
+        needSpecialLinkForEditor = true;
+        //Get Editor current state, to be used for linkDisplayModes for special Editor links.
         editorCurrState = request.getParameter("editorCurrState");
     }
     
-
-
-System.out.println("user_page_include_links... linkDisplayMode: "+linkDisplayMode+", editorCurrState: "+editorCurrState);
+    //System.out.println("user_page_include_links... linkDisplayMode: "+linkDisplayMode+", editorCurrState: "+editorCurrState);
     
     
 %>
@@ -64,13 +67,10 @@ System.out.println("user_page_include_links... linkDisplayMode: "+linkDisplayMod
                 //currLinkAddr = link.getLinkAddress();
                 //currLinkName = link.getLinkName().replace('+',' ');
                 
-                
                 currLinkHtml = link.getDispHtml(linkDisplayMode);
-                if (!editorCurrState.equals("")){
-                    //We are getting the link for the Editor. Need to add couple parameters.
+                if (needSpecialLinkForEditor){
                     currLinkHtml = link.getDispHtml(linkDisplayMode, editorCurrState, user.getUsername());
                 }
-                
                 
                 //check if first link is a category-less one
                 if (currCat.equals("")){
@@ -108,13 +108,10 @@ System.out.println("user_page_include_links... linkDisplayMode: "+linkDisplayMod
                 //currLinkAddr = link.getLinkAddress();
                 //currLinkName = link.getLinkName().replace('+',' ');
                 
-                
                 currLinkHtml = link.getDispHtml(linkDisplayMode);
-                if (!editorCurrState.equals("")){
-                    //We are getting the link for the Editor. Need to add couple parameters.
+                if (needSpecialLinkForEditor){
                     currLinkHtml = link.getDispHtml(linkDisplayMode, editorCurrState, user.getUsername());
                 }
-                
                 
                 if (!(currCat.equals(lastCat))){
                     //we have a new category so indent accordingly

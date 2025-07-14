@@ -115,7 +115,7 @@ session.setAttribute("userPage", userPage);
 String errMsg = "";
 
 
-
+//SECURE CHECK BLOCK
 //Check if user session is secure. I not, show the login form.
 if (userLogin.isSecure()) {
     //User is logged in and secure.
@@ -153,7 +153,7 @@ else {
 
 
 
-
+//EDITOR EXECUTION BLOCK
 //Following block checks for editor actions requested and ready to be executed,
 //and executes them.
 if (state.equals("1")){
@@ -171,35 +171,9 @@ else if (state.equals("2")){
     //and we need to execute it.
     
     
-    
-    /*
-    //if user came from state 1, try login
-    if (fromstate.equals("1")){
-        
-        //set up UserLogin object with username and password given
-        userLogin.setUsername(username.toLowerCase());
-        userLogin.setPass(pass);
-        
-        //attempt login (if successful this will set secure = true)
-        userLogin = UserLoginDAO.login(userLogin);
-
-        //check if we had a good login
-        if (userLogin.isSecure()){
-            //good login
-            //HttpSession session = request.getSession(true);
-            //session.setAttribute("userLogin", userLogin);//UserLoginBean object can be accessed as user
-            System.out.println("good login");
-        }
-        else {
-            //bad login
-            System.out.println("bad login");
-        }
-    }
-    */
-    
-    //here we should be logged in, whether already logged in or just did
+    //Ensure we are logged in before doing anything in state 2
     if (userLogin.isSecure() && username.equals(userLogin.getUsername())){
-        //
+        //Logged in and secure, continue.
         
         
         if (fromstate.equals("3a") || fromstate.equals("3a_1")){
@@ -237,7 +211,7 @@ else if (state.equals("2")){
             String editLinkResultMsg = UserPageDAO.editLink(userPage, selected_user_link_id, editlink_linkname, editlink_linkaddress);
             
             if (!editLinkResultMsg.equals("")){
-                //Have an error message and didn't add the link
+                //Have an error message and didn't edit the link
                 state = "3e_2";
                 errMsg = editLinkResultMsg;
             }
@@ -248,38 +222,27 @@ else if (state.equals("2")){
                 session.setAttribute("userPage", userPage);
             }
             
-            
-            
-            // LEFT OFF LEFT OFF LEFT OFF HERE NOTES
-            //I just did this
-            //then below I got the editor displaying the links as editor links for hte user to click on
-            //with that message on the right sidebar
-            //next step is to work on the state right after the user clicks one of those links
-            //which would be state 3e_1, for editing the link!
-            
-            //I already implemented UserPageDAO.editLink() and I think that will work
-            //once I get to testing that.
-            
-            
-            //OLD NOTE BELOW
-            //LEFT OFF HERE... 
-            //JUST IMPLEMENTED UserPageDAO.editLink(), and need to test that works!!
-            
-            //BUT HAVE A PROBLEM THAT WHEN I CLICK ON 
-            //EDIT A LINK, IT SHOWS THE LOGIN SCREEN. IT DOES THIS BECAUSE THE SECURE CHECK
-            //IS DONE IN state = 2, fromstate = 1
-            //AND THERE ISN'T ACTUALLY ANY SECURE CHECK IN STATE 3e
-            
-            //SO FIGURE THAT OUT.
-            
-            //ON TOP OF THAT, I HAVE TO MAKE SURE THE LINKS DISPLAY WITH THE DIFFERENT METHOD
-            //FOR THIS STATE BECAUSE I WANT THEM TO BE CLICKABLE FOR THE EDIT LINK PURPOSE
-            //AND THE LINKS ALL GO TO EDITOR_NEW.JSP WITH A SPECIFIC STATE AND THE LINK ID IN THE QUERY STRING.
-            
-            
         }
         else if (fromstate.equals("3d")){
-            //From State 3d, Delete a Link
+            //From State 3d
+            //Delete a Link
+            
+            //Call UserPageDAO.deleteLink() to delete it
+            //selected_user_link_id - the link the user selected for this action
+            String deleteLinkResultMsg = UserPageDAO.deleteLink(userPage, selected_user_link_id);
+            
+            if (!deleteLinkResultMsg.equals("")){
+                //Have an error message and didn't delete the link
+                state = "2";//already set
+                errMsg = deleteLinkResultMsg;
+            }
+            else {
+                //No error. Update the UserPage for display.
+                userPage = UserPageDAO.getUserPage(username);
+                //Set userPage as a session attribute so the include files can use it
+                session.setAttribute("userPage", userPage);
+            }
+            
             
             
         }
@@ -303,6 +266,9 @@ else if (state.equals("2")){
         
         
         
+    }
+    else {
+        //In state 2, but not secure! Do nothing.
     }
     
     
@@ -373,18 +339,11 @@ else if (state.equals("3dj")){
 }
 
 
-//set fromstate as current state for next action (goes into forms as hidden input)
+//Set fromstate as current state for next action (goes into forms as hidden input)
 fromstate = state;
 
 
 
-
-
-//LEFT OFF HERE
-//start off here putting in only the yellow sidebar basically 
-//do big table structure, but just fill in the second cell with yellow
-//side. Then make sure the navigation works and log in is registering correctly.
-//Remove all usage of logon.java eventually
 
 //REMOVE ALL USAGE OF LOGON.JAVA EVENTUALLY!!!
 
@@ -434,15 +393,14 @@ body {
     <%
     
     
-    //set the display mode for the top so it doesn't include the Edit link while in the editor
+    //Set the display mode for the top so it doesn't include the Edit link while in the editor
     String topDisplayMode = "1";//omits the Edit link
     
-    //set the display mode for the user links area so it shows links that look like links but are plain text and not clickable
+    //Set the default display mode for the user links area so it shows links that look like links but are plain text and not clickable
     String linkDisplayMode = "1";//look like links but are plain text
     
     
-    
-    //state 1, display login form with password input
+    //State 1, display login form with password input
     if (state.equals("1")){
         
         
@@ -487,9 +445,9 @@ body {
 
     }
     else if (userLogin.isSecure() && username.equals(userLogin.getUsername())){
-        //user is logged in. ok to display interior menu options
+        //Uer is logged in. ok to display interior menu options
 
-        //state 2, display main edit options
+        //State 2, display main edit options
         if (state.equals("2")){
             
             %>
@@ -523,7 +481,7 @@ body {
             <%
         }
 
-        //state 3o, display 'more options', non-basic options
+        //State 3o, display 'more options', non-basic options
         else if (state.equals("3o")){
             
             %>
@@ -556,7 +514,7 @@ body {
             <%
         }
         
-        //state 3a, display add a link dialog and form
+        //State 3a, display add a link dialog and form
         else if (state.equals("3a") || state.equals("3a_1")){
             
             String default_addlink_linkname = "";
@@ -630,9 +588,10 @@ body {
         }
         
         
-        //state 3e, display message to click on a link to choose which to edit
+        //State 3e, display message to click on a link to choose which to edit
         else if (state.equals("3e")){
             
+            //Adjust link display mode to allow for user to click a link to choose one for editing
             linkDisplayMode = "2";
             
             %>
@@ -649,7 +608,106 @@ body {
                         <jsp:include page="user_page_include_bottom.jsp" />
                     </td>
                     <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
-                        Click the link on the left that you want to edit...
+                        Click the link on the left that you want to edit
+                        <p style="text-align: center; padding: 20px 0px;">
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+            <%
+        }
+        
+        
+        //State 3e_1, display message to click on a link to choose which to edit
+        else if (state.equals("3e_1") || state.equals("3e_2")){
+            
+            //Get info for selected link so we can prefill values into input fields
+            UserLink selectedUserLink = UserPageDAO.getUserLink(selected_user_link_id);
+            String prefill_editlink_linkname = selectedUserLink.getLinkName();
+            String prefill_editlink_linkaddress = selectedUserLink.getLinkAddress();
+            
+            //Add extra message if we are in state 3e_2, which means we had an unsuccessful edit.
+            String linkEditErrMsg = "";
+            if (state.equals("3e_2")){
+                linkEditErrMsg = ""
+                        + "<p style=\"color: red;\">"
+                        + "The change was unsuccessful. "
+                        + errMsg 
+                        + "</p>";
+            }   
+            
+            %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
+                <tr>
+                    <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_links.jsp" >
+                            <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
+                            <jsp:param name="editorCurrState" value="<%=state%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
+                    </td>
+                    <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+                        
+                        <%=linkEditErrMsg%>
+                        
+                        <form name="editl" method="GET" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
+                            Link name: 
+                            <input name="editlink_linkname" size="27" maxlength="30" value="<%=prefill_editlink_linkname%>">
+                            <br>
+                            Link URL: 
+                            <input name="editlink_linkaddress" size="27" maxlength="85" value="<%=prefill_editlink_linkaddress%>">
+
+                            <input type="hidden" name="selected_user_link_id" value="<%=selected_user_link_id%>" >
+                            <input type="hidden" name="user" value="<%=username%>" >
+                            <input type="hidden" name="state" value="2" >
+                            <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+
+                            <div style="text-align: center; margin-top: 20px;">
+                                <input type="submit" value="Submit">
+                            </div>
+                        </form>
+
+                        <p style="text-align: center; padding: 20px 0px;">
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                        </p>
+
+                        <!--set focus in javascript-->
+                        <script type="text/javascript"><!--
+                            document.editl.editlink_linkname.focus();
+                        //--></script>
+                        
+                    </td>
+                </tr>
+            </table>
+            <%
+        }
+        
+        
+        //State 3e, display message to click on a link to choose which to edit
+        else if (state.equals("3d")){
+            
+            //Adjust link display mode to allow for user to click a link to choose one for editing
+            linkDisplayMode = "3";
+            
+            %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
+                <tr>
+                    <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_links.jsp" >
+                            <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
+                            <jsp:param name="editorCurrState" value="<%=state%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
+                    </td>
+                    <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+                        Click the link on the left that you want to delete
                         <p style="text-align: center; padding: 20px 0px;">
                             <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                         </p>
@@ -1165,7 +1223,7 @@ else {
                             helperMethods.adminUpdate(username, "edit Edit");
 
                         }
-
+                        
                         //From State 3d, Delete a Link
                         else if (fromstate.equals("3d")){
 

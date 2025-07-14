@@ -312,7 +312,7 @@ public class UserPageDAO {
             ResultSet rsAdminMaxLinks = null;
             int adminMaxLinks = -1;
             
-            //init SQL update stuff for if we do add the link
+            //Init SQL update stuff
             String updateAddLink = ""
                     + "INSERT INTO user_links "
                     + "(user_id, link_name, link_address, cat, cat_rank, sub_cat_rank, link_rank) "
@@ -324,9 +324,9 @@ public class UserPageDAO {
             try {
                 conn = DbConnectionPool.getConnection();//fetch a connection
                 if (conn != null){
-                    //perform queries/updates
+                    //Perform queries/updates
 
-                    //check on admin max links to compare with user's num links
+                    //Check on admin max links to compare with user's num links
                     psAdminMaxLinks = conn.prepareStatement(queryAdminMaxLinks);
                     rsAdminMaxLinks = psAdminMaxLinks.executeQuery();
                     if (rsAdminMaxLinks.next()){
@@ -386,7 +386,7 @@ public class UserPageDAO {
                         //System.out.println("UserPageDAO.addLink() 6 - updateAddLink: "+psAddLink.toString());
 			psAddLink.executeUpdate();
                         
-                        //		**ADMIN UPDATE**
+                        // **ADMIN UPDATE**
                         helperMethods.adminUpdate(userPage.getUsername(), "edit Add");
                         
                     }
@@ -395,7 +395,8 @@ public class UserPageDAO {
             }
             catch (SQLException e) {
                 DbConnectionPool.outputException(e, "UserPageDAO.addLink()", 
-                        new String[]{"queryAdminMaxLinks", queryAdminMaxLinks, 
+                        new String[]{
+                            "queryAdminMaxLinks", queryAdminMaxLinks, 
                             "updateAddLink", updateAddLink}
                         );
                 errorMsg = "Unknown error adding link";
@@ -436,30 +437,30 @@ public class UserPageDAO {
         boolean inputCheckOk = true;
         if (linkName.equals("")){ 
             inputCheckOk = false; 
-            errorMsg = "New link name is empty";
+            errorMsg = "New link name is empty.";
         }
         if (linkName.contains("\"")){ 
             inputCheckOk = false;
-            errorMsg = "Please remove the quote from new link name";
+            errorMsg = "Please remove the quote from new link name.";
         }
         if (linkAddress.equals("") || linkAddress.equals("null")){ 
             inputCheckOk = false; 
-            errorMsg = "New link name is empty";
+            errorMsg = "New link name is empty.";
         }
         if (linkAddress.contains("\"")){ 
             inputCheckOk = false;
-            errorMsg = "Please remove the quote from new link URL";
+            errorMsg = "Please remove the quote from new link URL.";
         }
         if (!MiscUtil.isValidURI(linkAddress)){ 
             inputCheckOk = false;
-            errorMsg = "New link URL is invalid";
+            errorMsg = "New link URL is invalid.";
         }
         
         System.out.println("UserPageDAO.editLink() 3 - inputCheckOk: "+inputCheckOk+", errorMsg: "+errorMsg);
         
         if (inputCheckOk){
             
-            //init SQL update stuff for if we do add the link
+            //Init SQL update stuff
             String updateEditLink = ""
                     + "UPDATE user_links "
                     + "SET "
@@ -467,7 +468,7 @@ public class UserPageDAO {
                     + "link_address = ? "
                     + "WHERE user_link_id = ? ";
             PreparedStatement psEditLink = null;
-
+            
             Connection conn = null;
             try {
                 conn = DbConnectionPool.getConnection();//fetch a connection
@@ -483,7 +484,7 @@ public class UserPageDAO {
                     //System.out.println("UserPageDAO.addLink() 6 - updateAddLink: "+psAddLink.toString());
                     psEditLink.executeUpdate();
 
-                    //		**ADMIN UPDATE**
+                    // **ADMIN UPDATE**
                     helperMethods.adminUpdate(userPage.getUsername(), "edit Edit");
 
                 }
@@ -496,6 +497,263 @@ public class UserPageDAO {
             }
             finally {
                 DbConnectionPool.closeStatement(psEditLink);
+                DbConnectionPool.closeConnection(conn);
+            }
+        }
+        
+        return errorMsg;
+    }
+    
+    
+    //deleteLink() attempts to delete an existing link for a user. When needed, 
+    //it also does housekeeping related to renumbering link ranks, category 
+    //ranks, and sub-category rank.
+    //Returns empty string if successful. If not successful, returns message String
+    public static String deleteLink(UserPage userPage, String selected_user_link_id) {
+        String errorMsg = "";
+        
+        System.out.println("UserPageDAO.deleteLink() 1 - selected_user_link_id: "+selected_user_link_id);
+        
+        boolean deletedLinkWasLastInCat = false;
+        boolean deletedLinkWasLastInSubCat = false;
+        
+        //Get full info on the link chosen for deletion
+        UserLink linkToDelete = getUserLink(selected_user_link_id);
+        
+        if (linkToDelete != null){
+            
+            //Gather category rank and sub-category rank of the link to delete. 
+            //We'll use those to check whether deleted link was the last of its
+            //kind in the category or sub-category.
+            int linkToDeleteCatRank = linkToDelete.getCatRank();
+            int linkToDeleteSubCatRank = linkToDelete.getSubCatRank();
+            
+            
+            //Init SQL update stuff
+            
+            //Main delete link update
+            String updateDeleteLink = ""
+                    + "DELETE FROM user_links "
+                    + "WHERE user_link_id = ? ";
+            PreparedStatement psDeleteLink = null;
+            
+            //Prep to update cat_rank for a link
+            String updateCatRank = ""
+                    + "UPDATE user_links "
+                    + "SET cat_rank = ? "
+                    + "WHERE "
+                    + "user_id = ? "
+                    + "AND user_link_id = ? ";
+            PreparedStatement psUpdateCatRank = null;
+            
+            //Prep to update sub_cat_rank for a link
+            String updateSubCatRank = ""
+                    + "UPDATE user_links "
+                    + "SET sub_cat_rank = ? "
+                    + "WHERE "
+                    + "user_id = ? "
+                    + "AND user_link_id = ? ";
+            PreparedStatement psUpdateSubCatRank = null;
+            
+            //Prep to update link_rank for a link
+            String updateLinkRank = ""
+                    + "UPDATE user_links "
+                    + "SET link_rank = ? "
+                    + "WHERE "
+                    + "user_id = ? "
+                    + "AND user_link_id = ? ";
+            PreparedStatement psUpdateLinkRank = null;
+            
+            
+            Connection conn = null;
+            try {
+                conn = DbConnectionPool.getConnection();//fetch a connection
+                if (conn != null){
+                    //perform queries/updates
+                    
+                    System.out.println("UserPageDAO.deleteLink() 2 - selected_user_link_id: "+selected_user_link_id+", linkToDeleteCatRank: "+linkToDeleteCatRank+", linkToDeleteSubCatRank: "+linkToDeleteSubCatRank);
+                    
+                    //Delete the link from database
+                    psDeleteLink = conn.prepareStatement(updateDeleteLink);
+                    psDeleteLink.setString(1, selected_user_link_id);
+                    System.out.println("UserPageDAO.deleteLink() 3 - updateDeleteLink: "+psDeleteLink.toString());
+                    psDeleteLink.executeUpdate();
+                    
+                    //Check userPage object for all links with same category as deleted link
+                    UserLink[] allLinksSameCategory = userPage.getLinksInCategoryByRank(linkToDeleteCatRank);
+                    if (allLinksSameCategory.length > 0){
+                        UserLink firstLink = allLinksSameCategory[0];
+                        if (allLinksSameCategory.length == 1 && firstLink.getUserLinkId() == Integer.parseInt(selected_user_link_id)){
+                            //There was only 1 link in that category, and it's the one we just deleted from the database.
+                            deletedLinkWasLastInCat = true;
+                        }
+                    }
+                    
+                    //Check userPage object for all links with same sub-category as deleted link
+                    UserLink[] allLinksSameSubCategory = userPage.getLinksInSubCategoryByRank(linkToDeleteCatRank, linkToDeleteSubCatRank);
+                    if (allLinksSameSubCategory.length > 0){
+                        UserLink firstLink = allLinksSameSubCategory[0];
+                        if (allLinksSameSubCategory.length == 1 && firstLink.getUserLinkId() == Integer.parseInt(selected_user_link_id)){
+                            //There was only 1 link in that sub-category, and it's the one we just deleted from the database.
+                            deletedLinkWasLastInSubCat = true;
+                        }
+                    }
+                    
+                    
+                    //Now we do different renumbering depending on whether the deleted link was
+                    //the last in the sub-category, category, or not any last.
+                    //If last in category, renumber all the category ranks over all links.
+                    //If last in sub-category (not last in category), renumber sub-category ranks over all links in the category.
+                    //If wasn't last in category or sub-category, renumber link ranks over all links in the sub-category.
+                    if (deletedLinkWasLastInCat){
+                        //Need to renumber category ranks of all user links
+                        
+                        //Prep renumbering the category ranks for all links.
+                        int currLinkCatRankOld = 1;//Will be catRank before any change
+                        int catRankNew = 1;//Will be catRank to update to
+                        
+                        //To start, get catRank of the first link to fill into currLinkCatRankOld
+                        UserLink[] allLinks = userPage.getUserLinks();
+                        if (allLinks.length > 0){
+                            currLinkCatRankOld = allLinks[0].getCatRank();
+                        }
+                        
+                        //Now we loop through all links to update them
+                        for (int i = 0; i < allLinks.length; i++){
+                            
+                            if (allLinks[i].getUserLinkId() == Integer.parseInt(selected_user_link_id)){
+                                //Current link in this array is same as one deleted. Need to 
+                                //completely disregard this one for renumbering.
+                            }
+                            else {
+                                //This link in array is not the same as the deleted one. Continue.
+                            
+                                //Check if loop hit a link that changed categories
+                                if (currLinkCatRankOld != allLinks[i].getCatRank()){
+                                    //Loop is on a user link with a different category than previous. 
+                                    //Increment counter, update comparison variable.
+                                    catRankNew++;
+                                    currLinkCatRankOld = allLinks[i].getCatRank();
+                                }
+
+                                //Get id for link we're on
+                                int currUserLinkId = allLinks[i].getUserLinkId();
+
+                                //Update the link to renumber the category
+                                psUpdateCatRank = conn.prepareStatement(updateCatRank);
+                                psUpdateCatRank.setInt(1, catRankNew);
+                                psUpdateCatRank.setInt(2, userPage.getUserId());
+                                psUpdateCatRank.setInt(3, currUserLinkId);
+                                System.out.println("UserPageDAO.deleteLink() - updateCatRank: "+psUpdateCatRank.toString());
+                                psUpdateCatRank.executeUpdate();
+                                
+                            }
+                            
+                        }
+                        
+                    }
+                    else if (deletedLinkWasLastInSubCat){
+                        //Need to renumber sub-category ranks for all links in same category
+                        //as deleted link. Deleted link was the only one in the sub-category, but not only one in the category.
+                        
+                        //Prep renumbering of the category ranks.
+                        int currLinkSubCatRankOld = 1;//Will be subCatRank before any change
+                        int subCatRankNew = 1;//Will be subCatRank to update to
+                        
+                        //Already have all links in the same category as deleted link - allLinksSameCategory.
+                        //Loop through them.
+                        for (int i = 0; i < allLinksSameCategory.length; i++){
+                            
+                            if (allLinksSameCategory[i].getUserLinkId() == Integer.parseInt(selected_user_link_id)){
+                                //Current link in this array is same as one deleted. Need to 
+                                //completely disregard this one for renumbering.
+                            }
+                            else {
+                                //This link in array is not the same as the deleted one. Continue.
+                                
+                                if (currLinkSubCatRankOld != allLinksSameCategory[i].getSubCatRank()){
+                                    //Loop is on a user link with a different subCatRank than previous. 
+                                    //Increment counter, update comparison variable.
+                                    subCatRankNew++;
+                                    currLinkSubCatRankOld = allLinksSameCategory[i].getSubCatRank();
+                                }
+                                
+                                //Get id for link we're on
+                                int currUserLinkId = allLinksSameCategory[i].getUserLinkId();
+                            
+                                //Update the link to renumber the category
+                                psUpdateSubCatRank = conn.prepareStatement(updateSubCatRank);
+                                psUpdateSubCatRank.setInt(1, subCatRankNew);
+                                psUpdateSubCatRank.setInt(2, userPage.getUserId());
+                                psUpdateSubCatRank.setInt(3, currUserLinkId);
+                                System.out.println("UserPageDAO.deleteLink() - updateSubCatRank: "+psUpdateSubCatRank.toString());
+                                psUpdateSubCatRank.executeUpdate();
+                                
+                            }
+                            
+                        }
+                        
+                    }
+                    else {
+                        //Need to renumber link ranks for all links in same category 
+                        //and sub-category as deleted link. 
+                        
+                        //Prep renumbering of the link ranks.
+                        int linkRankNew = 1;//Will be linkRank to update to
+                        
+                        //Already have all links in the same sub-category as deleted link - allLinksSameSubCategory.
+                        //Loop through them.
+                        for (int i = 0; i < allLinksSameSubCategory.length; i++){
+                            
+                            if (allLinksSameSubCategory[i].getUserLinkId() == Integer.parseInt(selected_user_link_id)){
+                                //Current link in this array is same as one deleted. Need to 
+                                //completely disregard this one for renumbering.
+                            }
+                            else {
+                                
+                                //Get id for link we're on
+                                int currUserLinkId = allLinksSameSubCategory[i].getUserLinkId();
+                            
+                                //Update the link to renumber the category
+                                psUpdateLinkRank = conn.prepareStatement(updateLinkRank);
+                                psUpdateLinkRank.setInt(1, linkRankNew);
+                                psUpdateLinkRank.setInt(2, userPage.getUserId());
+                                psUpdateLinkRank.setInt(3, currUserLinkId);
+                                System.out.println("UserPageDAO.deleteLink() - updateLinkRank: "+psUpdateLinkRank.toString());
+                                psUpdateLinkRank.executeUpdate();
+                                
+                                linkRankNew++;
+                                
+                            }
+                            
+                        }
+                        
+                    }
+                    
+                    // **ADMIN UPDATE**
+                    helperMethods.adminUpdate(userPage.getUsername(), "edit Delete");
+                    
+                }
+            }
+            catch (SQLException e) {
+                DbConnectionPool.outputException(e, "UserPageDAO.deleteLink()", 
+                        new String[]{
+                            "updateDeleteLink", updateDeleteLink, 
+                            "updateCatRank", updateCatRank, 
+                            "updateSubCatRank", updateSubCatRank, 
+                            "updateLinkRank", updateLinkRank}
+                        );
+                errorMsg = "Unknown error editing link";
+            }
+            finally {
+                DbConnectionPool.closeStatement(psDeleteLink);
+                        
+                DbConnectionPool.closeStatement(psUpdateCatRank);
+                
+                DbConnectionPool.closeStatement(psUpdateSubCatRank);
+                
+                DbConnectionPool.closeStatement(psUpdateLinkRank);
+                
                 DbConnectionPool.closeConnection(conn);
             }
             
