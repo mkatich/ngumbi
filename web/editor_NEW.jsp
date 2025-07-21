@@ -75,6 +75,8 @@ String addlink_cat_userspecified = request.getParameter("addlink_cat_userspecifi
 String selected_user_link_id = request.getParameter("selected_user_link_id");
 String editlink_linkname = request.getParameter("editlink_linkname");
 String editlink_linkaddress = request.getParameter("editlink_linkaddress");
+String renamecat_old = request.getParameter("renamecat_old");
+String renamecat_new = request.getParameter("renamecat_new");
 
 
 //get additional params used for editing purposes
@@ -247,8 +249,35 @@ else if (state.equals("2")){
             
         }
         else if (fromstate.equals("3r_1") || fromstate.equals("3r_2")){
-            //From State 3r_1, 3r_2, Rename a Category
-            //edit table to modify category name they chose
+            //From State 3r_1, 3r_2
+            //Rename a Category
+            
+            //Call UserPageDAO.renameCategory() to rename it
+            String renameCategoryResultMsg = UserPageDAO.renameCategory(userPage, renamecat_old, renamecat_new);
+            
+            if (!renameCategoryResultMsg.equals("")){
+                //Have an error message and didn't rename the category
+                state = "2";//already set
+                errMsg = renameCategoryResultMsg;
+            }
+            else {
+                //No error. Update the UserPage for display.
+                userPage = UserPageDAO.getUserPage(username);
+                //Set userPage as a session attribute so the include files can use it
+                session.setAttribute("userPage", userPage);
+            }
+            
+            //LEFT OFF HERE... --- *** LEFT OFF HERE ... --- ***
+            //JUST BARELY STARTED ON THIS... PUT THIS NEW CODE HERE
+            //I DIDN'T IMPLEMENT THE RENAMECATEGORY() METHOD YET!
+            //NEED TO IMPLEMENT THA TMETHOD, USING THE EXECUTION AS THE OLD WAY
+            //AS A GUIDE FROM LINE 1380 IN THIS JSP... 
+            //AND ALSO NEED TO REWORK HOW THE PAGE DISPLAYS FOR STATE 3R SO 
+            //THE USER CAN CLICK LINKS FOR THE CATEGORY THEY WANT TO RENAME
+            
+            //SEE LINE 1380 FOR OLD WAY OF EXECUTING RENAME A CATEGORY
+            
+            
         }
         else if (fromstate.equals("3g") || fromstate.equals("3g_0") || fromstate.equals("3g_10")){
             //From State 3g, Change Search option

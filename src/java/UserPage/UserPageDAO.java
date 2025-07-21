@@ -763,6 +763,17 @@ public class UserPageDAO {
     }
     
     
+    //renameCategory() attempts to rename a category for a user. Category names 
+    //are stored as a column in the links table. So to rename a category, this
+    //acts on all links for the user which have this category value.
+    //it also does housekeeping related to renumbering link ranks, category 
+    //ranks, and sub-category rank.
+    //Returns empty string if successful. If not successful, returns message String
+    public static String renameCategory(UserPage userPage, String renamecat_old, String renamecat_new) {
+        String errorMsg = "";
+        
+        return errorMsg;
+    }
     
     
 }
