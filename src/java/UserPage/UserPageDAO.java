@@ -772,6 +772,82 @@ public class UserPageDAO {
     public static String renameCategory(UserPage userPage, String renamecat_old, String renamecat_new) {
         String errorMsg = "";
         
+        //Do some input checks
+        boolean inputCheckOk = true;
+        if (renamecat_new == null || renamecat_new.equals("") || renamecat_new.equals("null")){
+            inputCheckOk = false;
+            errorMsg = "Problem with new category name";
+        }
+        else if (renamecat_new.substring(0,1).equals("~")){
+            // ~ character is reserved for Admin stuff
+            inputCheckOk = false;
+            errorMsg = "Problem with new category name";
+        }
+        
+        //Check if the new category name is the same as the old
+        boolean newAndOldCatAreSame = false;
+        if (renamecat_new != null && renamecat_new.equals(renamecat_old)){
+            newAndOldCatAreSame = true;
+        }
+        
+        //Start execution if everything good
+        if (inputCheckOk && !newAndOldCatAreSame){
+            
+            
+            
+            
+            
+        }
+        
+        /*
+            if (!catnew.equals(cat)){
+                //there was a change, so need to check for duplicate
+                String duplicateCheck = "SELECT cat FROM user_links WHERE user_id = "+user_id+" AND cat = '"+catnew+"'";
+                Statement stat98 = null;
+                ResultSet rsduplicates3 = null;
+                //duplicate check looks for duplicate category name
+                try {
+                    stat98 = conn.createStatement();
+                    rsduplicates3 = stat98.executeQuery(duplicateCheck);//if changed linkurl or linkname already exists in table, returns a linkname
+                }
+                catch (Exception e) {
+                    out.print("Unable to make connection to production database");
+                    out.print(e);
+                }
+                if (rsduplicates3.next()){ inputCheckOk = false; } //there was a duplicate of an input already in table
+
+                //do SQL operations, change all links with this category name to new category name
+                if (inputCheckOk){ //inputs are ok, not bad characters or dups and there was a change
+
+                    Statement stat99 = null;
+                    String updateCat = "UPDATE user_links SET cat = '"+catnew+"' WHERE user_id = "+user_id+" AND cat = '"+cat+"'";
+                    try {
+                        stat99 = conn.createStatement();
+                        stat99.executeUpdate(updateCat);
+                    }
+                    catch (Exception e) {
+                        out.print("Unable to make connection to production database - updateCat: "+updateCat+". ");
+                        out.print(e);
+                    }
+
+                    //		**ADMIN UPDATE**
+                    helperMethods.adminUpdate(username, "edit Rename");
+
+                }
+                else {
+                    //inputCheckOk is not ok.
+                    //either they used a bad character or new category name they entered is already in use in another link
+                    //go to state 3r_2, only difference with 3r_1 is message that attempted change was unsuccessful
+                    state = "3r_2";
+                }
+                rsduplicates3.close();
+            }
+        
+        
+        */
+        
+        
+        
         return errorMsg;
     }
     
