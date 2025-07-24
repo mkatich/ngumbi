@@ -7,6 +7,11 @@
  */
 package UserPage;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
  * @author Michael
@@ -96,25 +101,27 @@ public class UserLink {
     
     //returns html content for this link which can vary 
     //depending on given linkDisplayMode
-    public String getDispHtml() {
-        return getDispHtml(0);
+    public String getLinkDispHtml() {
+        return getLinkDispHtml(0);
     }
-    public String getDispHtml(int linkDisplayMode) {
-        return getDispHtml(linkDisplayMode, "", "");
+    public String getLinkDispHtml(int linkDisplayMode) {
+        return getLinkDispHtml(linkDisplayMode, "", "");
     }
-    public String getDispHtml(int linkDisplayMode, String editorCurrState, String username){
+    public String getLinkDispHtml(int linkDisplayMode, String editorCurrState, String username){
         String linkHtml = "";
-        String editorNextState = "";
+        String editorNextState;
         switch (linkDisplayMode) {
             case 0:
                 //Default link mode, used by user page. Displays a normal clickable link.
                 linkHtml = "<a href=\""+this.linkAddress+"\" class=\"user_link\">"+this.linkName.replace('+',' ')+"</a>";
                 break;
+                
             case 1:
                 //This mode displays an unclickable link and is used for display when viewing Editor.
                 String linkColorCss = "color: #0000cc;";
                 linkHtml = "<span style=\""+linkColorCss+"\" class=\"user_link\"><u>"+this.linkName+"</u></span>";
                 break;
+                
             case 2:
                 //This mode displays a clickable link meant for use within Editor for user to choose a link. This
                 //identifies the link for the next part of the editing process. 
@@ -128,6 +135,7 @@ public class UserLink {
                         + this.linkName
                         + "</a>";
                 break;
+                
             case 3:
                 //This mode displays a clickable link meant for use within Editor for user to choose a link. This
                 //identifies the link for the next part of the editing process. 
@@ -141,12 +149,62 @@ public class UserLink {
                         + this.linkName
                         + "</a>";
                 break;
+                
             case 4:
+                //This mode displays just plain text, no link. It's not clickable, and there is no 
+                //confusing for user. 
+                //This is used when the category is clickable for renaming (3r)
+                linkHtml = "<span class=\"user_link\">"+this.linkName+"</span>";
                 break;
+                
             default:
                 break;
         }
         return linkHtml;
+    }
+    
+    
+    //returns html content for the category of this link which can vary 
+    //depending on given catDisplayMode
+    public String getCatDispHtml() {
+        return getCatDispHtml(0);
+    }
+    public String getCatDispHtml(int catDisplayMode) {
+        return getCatDispHtml(catDisplayMode, "", "");
+    }
+    public String getCatDispHtml(int catDisplayMode, String editorCurrState, String username){
+        String catHtml = "";
+        String editorNextState;
+        switch (catDisplayMode) {
+            case 0:
+                //Default category display mode, used by user page. Displays a normal plaintext category.
+                catHtml = this.cat;
+                break;
+                
+            case 1:
+                //This mode displays category as a clickable link meant for use within Editor for user to choose a category. 
+                //This identifies the category for the next part of the editing process. 
+                //Here, the next state is derived as current state plus "_1" appended.
+                //This one is for renaming a category (3r)
+                editorNextState = editorCurrState+"_1";
+                String urlEncodedCategoryName = "";
+                try {
+                    urlEncodedCategoryName = URLEncoder.encode(this.cat, "UTF-8");
+                } catch (UnsupportedEncodingException ex) {
+                    Logger.getLogger(UserLink.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                catHtml = ""
+                        + "<a "
+                        + "href=\"editor_NEW.jsp?user="+username+"&state="+editorNextState+"&fromstate="+editorCurrState+"&renamecat_old="+urlEncodedCategoryName+"\" "
+                        + ">"
+                        + this.cat
+                        + "</a>";
+                break;
+                
+            default:
+                break;
+        }
+        return catHtml;
     }
     
 }

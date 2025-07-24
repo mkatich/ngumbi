@@ -184,12 +184,12 @@ public class UserPageDAO {
             conn = DbConnectionPool.getConnection();//fetch a connection
             if (conn != null){
                 //perform queries
-
+                
                 //get user data (metadata, not links)
                 psUserLink = conn.prepareStatement(qUserLink);
                 psUserLink.setString(1, userLinkId);
                 rsUserLink = psUserLink.executeQuery();
-
+                
                 boolean haveUserLinkData = false;
                 if (rsUserLink.next()){
                     haveUserLinkData = true;
@@ -325,7 +325,7 @@ public class UserPageDAO {
                 conn = DbConnectionPool.getConnection();//fetch a connection
                 if (conn != null){
                     //Perform queries/updates
-
+                    
                     //Check on admin max links to compare with user's num links
                     psAdminMaxLinks = conn.prepareStatement(queryAdminMaxLinks);
                     rsAdminMaxLinks = psAdminMaxLinks.executeQuery();
@@ -512,7 +512,7 @@ public class UserPageDAO {
     public static String deleteLink(UserPage userPage, String selected_user_link_id) {
         String errorMsg = "";
         
-        System.out.println("UserPageDAO.deleteLink() 1 - selected_user_link_id: "+selected_user_link_id);
+        //System.out.println("UserPageDAO.deleteLink() 1 - selected_user_link_id: "+selected_user_link_id);
         
         boolean deletedLinkWasLastInCat = false;
         boolean deletedLinkWasLastInSubCat = false;
@@ -571,12 +571,12 @@ public class UserPageDAO {
                 if (conn != null){
                     //perform queries/updates
                     
-                    System.out.println("UserPageDAO.deleteLink() 2 - selected_user_link_id: "+selected_user_link_id+", linkToDeleteCatRank: "+linkToDeleteCatRank+", linkToDeleteSubCatRank: "+linkToDeleteSubCatRank);
+                    //System.out.println("UserPageDAO.deleteLink() 2 - selected_user_link_id: "+selected_user_link_id+", linkToDeleteCatRank: "+linkToDeleteCatRank+", linkToDeleteSubCatRank: "+linkToDeleteSubCatRank);
                     
                     //Delete the link from database
                     psDeleteLink = conn.prepareStatement(updateDeleteLink);
                     psDeleteLink.setString(1, selected_user_link_id);
-                    System.out.println("UserPageDAO.deleteLink() 3 - updateDeleteLink: "+psDeleteLink.toString());
+                    //System.out.println("UserPageDAO.deleteLink() 3 - updateDeleteLink: "+psDeleteLink.toString());
                     psDeleteLink.executeUpdate();
                     
                     //Check userPage object for all links with same category as deleted link
@@ -644,7 +644,7 @@ public class UserPageDAO {
                                 psUpdateCatRank.setInt(1, catRankNew);
                                 psUpdateCatRank.setInt(2, userPage.getUserId());
                                 psUpdateCatRank.setInt(3, currUserLinkId);
-                                System.out.println("UserPageDAO.deleteLink() - updateCatRank: "+psUpdateCatRank.toString());
+                                //System.out.println("UserPageDAO.deleteLink() - updateCatRank: "+psUpdateCatRank.toString());
                                 psUpdateCatRank.executeUpdate();
                                 
                             }
@@ -686,7 +686,7 @@ public class UserPageDAO {
                                 psUpdateSubCatRank.setInt(1, subCatRankNew);
                                 psUpdateSubCatRank.setInt(2, userPage.getUserId());
                                 psUpdateSubCatRank.setInt(3, currUserLinkId);
-                                System.out.println("UserPageDAO.deleteLink() - updateSubCatRank: "+psUpdateSubCatRank.toString());
+                                //System.out.println("UserPageDAO.deleteLink() - updateSubCatRank: "+psUpdateSubCatRank.toString());
                                 psUpdateSubCatRank.executeUpdate();
                                 
                             }
@@ -719,7 +719,7 @@ public class UserPageDAO {
                                 psUpdateLinkRank.setInt(1, linkRankNew);
                                 psUpdateLinkRank.setInt(2, userPage.getUserId());
                                 psUpdateLinkRank.setInt(3, currUserLinkId);
-                                System.out.println("UserPageDAO.deleteLink() - updateLinkRank: "+psUpdateLinkRank.toString());
+                                //System.out.println("UserPageDAO.deleteLink() - updateLinkRank: "+psUpdateLinkRank.toString());
                                 psUpdateLinkRank.executeUpdate();
                                 
                                 linkRankNew++;
@@ -788,15 +788,90 @@ public class UserPageDAO {
         boolean newAndOldCatAreSame = false;
         if (renamecat_new != null && renamecat_new.equals(renamecat_old)){
             newAndOldCatAreSame = true;
+            //Don't bother with an error message in this situation.
         }
         
         //Start execution if everything good
         if (inputCheckOk && !newAndOldCatAreSame){
             
+            //Query to check for duplicate category name for the user
+            String queryCheckDuplicate = ""
+                    + "SELECT cat FROM user_links WHERE user_id = ? AND cat = ? LIMIT 1";
+            PreparedStatement psCheckDuplicate = null;
+            ResultSet rsCheckDuplicate = null;
+            boolean isDuplicate = false;
+            
+            //Update statement to update the category name
+            String updateCat = ""
+                    + "UPDATE user_links SET cat = ? WHERE user_id = ? AND cat = ?";
+            PreparedStatement psUpdateCat = null;
+            
+            
+            
+            Connection conn = null;
+            try {
+                conn = DbConnectionPool.getConnection();//fetch a connection
+                if (conn != null){
+                    //perform queries/updates
+                    
+                    //System.out.println("UserPageDAO.renameCategory() - renamecat_old: "+renamecat_old+", renamecat_new: "+renamecat_new);
+                    
+                    //Check if the user already has a duplicate category name 
+                    //to the one they want to rename another to
+                    psCheckDuplicate = conn.prepareStatement(queryCheckDuplicate);
+                    psCheckDuplicate.setInt(1, userPage.getUserId());
+                    psCheckDuplicate.setString(2, renamecat_new);
+                    rsCheckDuplicate = psCheckDuplicate.executeQuery();
+                    
+                    if (rsCheckDuplicate.next()){
+                        isDuplicate = true;
+                    }
+                    
+                    if (isDuplicate){
+                        errorMsg = "Category name is a duplicate of one that already exists";
+                    }
+                    else {
+                        
+                        //Make the change to the category name (updates all relevant links)
+                        psUpdateCat = conn.prepareStatement(updateCat);
+                        psUpdateCat.setString(1, renamecat_new);
+                        psUpdateCat.setInt(2, userPage.getUserId());
+                        psUpdateCat.setString(3, renamecat_old);
+                        psUpdateCat.executeUpdate();
+                        
+                        // **ADMIN UPDATE**
+                        helperMethods.adminUpdate(userPage.getUsername(), "edit Rename");
+                        
+                    }
+                    
+                }
+            }
+            catch (SQLException e) {
+                DbConnectionPool.outputException(e, "UserPageDAO.deleteLink()", 
+                        new String[]{
+                            "queryCheckDuplicate", queryCheckDuplicate, 
+                            "updateCat", updateCat}
+                        );
+                errorMsg = "Unknown error renaming category";
+            }
+            finally {
+                DbConnectionPool.closeResultSet(rsCheckDuplicate);
+                DbConnectionPool.closeStatement(psCheckDuplicate);
+                        
+                DbConnectionPool.closeStatement(psUpdateCat);
+                
+                DbConnectionPool.closeConnection(conn);
+            }
             
             
             
             
+            
+            
+        }
+        else {
+            //Input check failed
+            //We already have specific error message in errMsg
         }
         
         /*

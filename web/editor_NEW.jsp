@@ -121,7 +121,7 @@ String errMsg = "";
 //Check if user session is secure. I not, show the login form.
 if (userLogin.isSecure()) {
     //User is logged in and secure.
-    System.out.println("user session is already secure");
+    //System.out.println("user session is already secure");
 }
 else if (state.equals("2") && fromstate.equals("1")){
     //User not secure, but just made login attempt. 
@@ -139,11 +139,13 @@ else if (state.equals("2") && fromstate.equals("1")){
         //Good login
         //HttpSession session = request.getSession(true);
         //session.setAttribute("userLogin", userLogin);//UserLoginBean object can be accessed as user
-        System.out.println("good login");
+        
+        //System.out.println("good login");
     }
     else {
         //Bad login
-        System.out.println("bad login");
+        
+        //System.out.println("bad login");
     }
     
 }
@@ -245,8 +247,6 @@ else if (state.equals("2")){
                 session.setAttribute("userPage", userPage);
             }
             
-            
-            
         }
         else if (fromstate.equals("3r_1") || fromstate.equals("3r_2")){
             //From State 3r_1, 3r_2
@@ -257,7 +257,7 @@ else if (state.equals("2")){
             
             if (!renameCategoryResultMsg.equals("")){
                 //Have an error message and didn't rename the category
-                state = "2";//already set
+                state = "3r_2";//Allows user to try again
                 errMsg = renameCategoryResultMsg;
             }
             else {
@@ -266,17 +266,6 @@ else if (state.equals("2")){
                 //Set userPage as a session attribute so the include files can use it
                 session.setAttribute("userPage", userPage);
             }
-            
-            //LEFT OFF HERE... --- *** LEFT OFF HERE ... --- ***
-            //JUST BARELY STARTED ON THIS... PUT THIS NEW CODE HERE
-            //I DIDN'T IMPLEMENT THE RENAMECATEGORY() METHOD YET!
-            //NEED TO IMPLEMENT THA TMETHOD, USING THE EXECUTION AS THE OLD WAY
-            //AS A GUIDE FROM LINE 1380 IN THIS JSP... 
-            //AND ALSO NEED TO REWORK HOW THE PAGE DISPLAYS FOR STATE 3R SO 
-            //THE USER CAN CLICK LINKS FOR THE CATEGORY THEY WANT TO RENAME
-            
-            //SEE LINE 1380 FOR OLD WAY OF EXECUTING RENAME A CATEGORY
-            
             
         }
         else if (fromstate.equals("3g") || fromstate.equals("3g_0") || fromstate.equals("3g_10")){
@@ -428,10 +417,14 @@ body {
     //Set the default display mode for the user links area so it shows links that look like links but are plain text and not clickable
     String linkDisplayMode = "1";//look like links but are plain text
     
+    //Set the default display mode for the category names so it shows plain text, not clickable
+    String catDisplayMode = "0";
+    
     
     //State 1, display login form with password input
     if (state.equals("1")){
         
+        //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
         
         %>
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
@@ -479,6 +472,8 @@ body {
         //State 2, display main edit options
         if (state.equals("2")){
             
+            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
+            
             %>
             <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
                 <tr>
@@ -513,6 +508,8 @@ body {
         //State 3o, display 'more options', non-basic options
         else if (state.equals("3o")){
             
+            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
+            
             %>
             <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
                 <tr>
@@ -545,6 +542,8 @@ body {
         
         //State 3a, display add a link dialog and form
         else if (state.equals("3a") || state.equals("3a_1")){
+
+            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
             
             String default_addlink_linkname = "";
             String default_addlink_linkaddress = "";
@@ -648,8 +647,11 @@ body {
         }
         
         
-        //State 3e_1, display message to click on a link to choose which to edit
+        //State 3e_1, display form for editing the chosen link
+        //and if 3e_2, also display error message
         else if (state.equals("3e_1") || state.equals("3e_2")){
+
+            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
             
             //Get info for selected link so we can prefill values into input fields
             UserLink selectedUserLink = UserPageDAO.getUserLink(selected_user_link_id);
@@ -683,13 +685,13 @@ body {
                         
                         <%=linkEditErrMsg%>
                         
-                        <form name="editl" method="GET" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
+                        <form name="editl" method="get" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
                             Link name: 
                             <input name="editlink_linkname" size="27" maxlength="30" value="<%=prefill_editlink_linkname%>">
                             <br>
                             Link URL: 
                             <input name="editlink_linkaddress" size="27" maxlength="85" value="<%=prefill_editlink_linkaddress%>">
-
+                            
                             <input type="hidden" name="selected_user_link_id" value="<%=selected_user_link_id%>" >
                             <input type="hidden" name="user" value="<%=username%>" >
                             <input type="hidden" name="state" value="2" >
@@ -706,7 +708,7 @@ body {
 
                         <!--set focus in javascript-->
                         <script type="text/javascript"><!--
-                            document.editl.editlink_linkname.focus();
+                            document.editl.editlink_linkname.select();
                         //--></script>
                         
                     </td>
@@ -740,6 +742,100 @@ body {
                         <p style="text-align: center; padding: 20px 0px;">
                             <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
                         </p>
+                    </td>
+                </tr>
+            </table>
+            <%
+        }
+        
+        
+        //State 3r, display message to click on a category to choose which to rename
+        else if (state.equals("3r")){
+            
+            //Adjust link display mode so user links are just plain text and not clickable.
+            //And adjust category display mode so categories are clickable links.
+            linkDisplayMode = "4";
+            catDisplayMode = "1";
+            
+            %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
+                <tr>
+                    <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_links.jsp" >
+                            <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
+                            <jsp:param name="catDisplayMode" value="<%=catDisplayMode%>" />
+                            <jsp:param name="editorCurrState" value="<%=state%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
+                    </td>
+                    <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+                        Click the category name that you want to rename
+                        <p style="text-align: center; padding: 20px 0px;">
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+            <%
+        }
+        
+        
+        //State 3r_1, display form for editing the chosen category name
+        //and if 3r_2, also display error message
+        else if (state.equals("3r_1") || state.equals("3r_2")){
+            
+            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
+            
+            //Add extra message if we are in state 3e_2, which means we had an unsuccessful edit.
+            String categoryRenameErrMsg = "";
+            if (state.equals("3r_2")){
+                categoryRenameErrMsg = ""
+                        + "<p style=\"color: red;\">"
+                        + "The change was unsuccessful. "
+                        + errMsg 
+                        + "</p>";
+            }   
+            
+            %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
+                <tr>
+                    <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_links.jsp" >
+                            <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
+                            <jsp:param name="editorCurrState" value="<%=state%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
+                    </td>
+                    <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+                        
+                        <%=categoryRenameErrMsg%>
+                        
+                        <form name="editc" method="get" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
+                            Category name: <input name="renamecat_new" size="20" maxlength=20 value="<%=renamecat_old%>" >
+                            <input type="hidden" name="renamecat_old" value="<%=renamecat_old%>" >
+                            <input type="hidden" name="user" value="<%=username%>" >
+                            <input type="hidden" name="state" value="2" >
+                            <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+                            <div style="text-align: center; margin-top: 20px;">
+                                <input type="submit" value="Submit">
+                            </div>
+                        </form>
+                        
+                        <p style="text-align: center; padding: 20px 0px;">
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                        </p>
+                        
+                        <!--set focus in javascript-->
+                        <script type="text/javascript"><!--
+                            document.editc.renamecat_new.select();
+                        //--></script>
+                        
                     </td>
                 </tr>
             </table>

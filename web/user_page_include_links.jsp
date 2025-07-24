@@ -20,22 +20,25 @@
     User user = userPage.getUser();
     UserLink[] userLinks = userPage.getUserLinks();
     
-    //Get mode for displaying links - default is 0 and shows regular link
+    //Get mode for displaying links - default is 0 and shows regular link like for standard viewing of user page.
     String linkDisplayModeStr = request.getParameter("linkDisplayMode");
     int linkDisplayMode = 0;
     if (linkDisplayModeStr != null && linkDisplayModeStr.matches("\\d+")){
         linkDisplayMode = Integer.parseInt(linkDisplayModeStr);
     }
     
-    //Check if we will be making a special link for the editor, like for 
-    //choosing a link to edit or delete. This means we'll call a different 
-    //UserLink.getDispHtml().
-    boolean needSpecialLinkForEditor = false;
-    String editorCurrState = "";
-    if (linkDisplayMode == 2 || linkDisplayMode == 3){
-        needSpecialLinkForEditor = true;
-        //Get Editor current state, to be used for linkDisplayModes for special Editor links.
-        editorCurrState = request.getParameter("editorCurrState");
+    //Get mode for displaying category names - default is 0 and shows plain text like for standard viewing of user page.
+    String catDisplayModeStr = request.getParameter("catDisplayMode");
+    int catDisplayMode = 0;
+    if (catDisplayModeStr != null && catDisplayModeStr.matches("\\d+")){
+        catDisplayMode = Integer.parseInt(catDisplayModeStr);
+    }
+    
+    //Get editorCurrState in case it was provided, and is needed for either a
+    //special editor link on the user link or on category name
+    String editorCurrState = request.getParameter("editorCurrState");
+    if (editorCurrState == null){
+        editorCurrState = "";
     }
     
     //System.out.println("user_page_include_links... linkDisplayMode: "+linkDisplayMode+", editorCurrState: "+editorCurrState);
@@ -56,21 +59,24 @@
             int lastSubCatRank = 0;
             
             String currLinkHtml = "";
+            String currCatHtml = "";
             
             //do the first link
             if (userLinks.length > 0){
                 
                 UserLink link = userLinks[linkCounter];
                 
-                currCat = link.getCat().replace('+',' ');//have to get first table entry to assign tracking variables
+                //currCat = link.getCat().replace('+',' ');//have to get first table entry to assign tracking variables
                 currSubCatRank = link.getSubCatRank();//of current category and subcategory
                 //currLinkAddr = link.getLinkAddress();
                 //currLinkName = link.getLinkName().replace('+',' ');
                 
-                currLinkHtml = link.getDispHtml(linkDisplayMode);
-                if (needSpecialLinkForEditor){
-                    currLinkHtml = link.getDispHtml(linkDisplayMode, editorCurrState, user.getUsername());
-                }
+                //Get HTML for this link
+                currLinkHtml = link.getLinkDispHtml(linkDisplayMode, editorCurrState, user.getUsername());
+                
+                //Get HTML for this link's category
+                currCatHtml = link.getCatDispHtml(catDisplayMode, editorCurrState, user.getUsername());
+                
                 
                 //check if first link is a category-less one
                 if (currCat.equals("")){
@@ -88,7 +94,7 @@
                     %>
                     <tr>
                         <td valign="top" width="50%">
-                            <strong><%=currCat%></strong>
+                            <strong><%=currCatHtml%></strong>
                             <br><%=currLinkHtml%>&nbsp;&nbsp;<%
                     catCounter++;
                     lastCat = currCat;
@@ -103,15 +109,16 @@
                 
                 UserLink link = userLinks[linkCounter];
                 
-                currCat = link.getCat().replace('+',' ');//have to get first table entry to assign tracking variables
+                //currCat = link.getCat().replace('+',' ');//have to get first table entry to assign tracking variables
                 currSubCatRank = link.getSubCatRank();//of current category and subcategory
                 //currLinkAddr = link.getLinkAddress();
                 //currLinkName = link.getLinkName().replace('+',' ');
                 
-                currLinkHtml = link.getDispHtml(linkDisplayMode);
-                if (needSpecialLinkForEditor){
-                    currLinkHtml = link.getDispHtml(linkDisplayMode, editorCurrState, user.getUsername());
-                }
+                //Get HTML for this link
+                currLinkHtml = link.getLinkDispHtml(linkDisplayMode, editorCurrState, user.getUsername());
+                
+                //Get HTML for this link's category
+                currCatHtml = link.getCatDispHtml(catDisplayMode, editorCurrState, user.getUsername());
                 
                 if (!(currCat.equals(lastCat))){
                     //we have a new category so indent accordingly
@@ -123,7 +130,7 @@
                         %>
                         </td>
                         <td valign="top" width="50%">
-                            <strong><%=currCat%></strong>
+                            <strong><%=currCatHtml%></strong>
                             <br><%=currLinkHtml%>&nbsp;&nbsp;<%
                     }
                     else {
@@ -133,7 +140,7 @@
                     </tr>
                     <tr>
                         <td valign="top" width="50%">
-                            <strong><%=currCat%></strong>
+                            <strong><%=currCatHtml%></strong>
                             <br><%=currLinkHtml%>&nbsp;&nbsp;<%
 
                         if (lastCat.equals("")){
