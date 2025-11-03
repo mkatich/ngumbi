@@ -13,7 +13,7 @@
 <jsp:useBean id="userLogin" class="UserLogin.UserLogin" scope="session" />
 <%
     
-    //gather user details including search options from the userPage 
+    //Gather user details including search options from the userPage 
     //session attribute
     UserPage userPage = (UserPage) session.getAttribute("userPage");
     User user = userPage.getUser();
@@ -22,12 +22,20 @@
     String searchUrl = user.getSearchUrl();
     String searchLang = user.getSearchLang();
     
-    //get mode for displaying links - default is 0 and shows regular link
+    //Get whether user used http or https to access this page, and in turn, choose
+    //which scheme (aka protocol) for the top search URL
+    String schemeForSearchUrl = "http";
+    if (request.getScheme().equals("https")) {
+        schemeForSearchUrl = "https";
+    }
+    
+    //Get mode for displaying links - default is 0 and shows regular link
     String topDisplayModeStr = request.getParameter("topDisplayMode");
     int topDisplayMode = 0;
     if (topDisplayModeStr != null && topDisplayModeStr.matches("\\d+")){
         topDisplayMode = Integer.parseInt(topDisplayModeStr);
     }
+    
     
 %>
         <!-- Start Page Header (top table) -->
@@ -65,10 +73,10 @@
                         
                         %>
                         <!-- Search Google -->
-                        <form name="search_form" action="http://<%=searchUrl%>/<%=searchSuffix2%>" id="cse-search-box">
+                        <form name="search_form" action="<%=schemeForSearchUrl%>://<%=searchUrl%>/<%=searchSuffix2%>" id="cse-search-box">
                           <div>
-                            <a href="http://<%=searchUrl%>/" style="text-decoration: none;">
-                                <img src="http://www.google.com/logos/Logo_40wht.gif" border="0" alt="Google" align="middle">
+                            <a href="<%=schemeForSearchUrl%>://<%=searchUrl%>/" style="text-decoration: none;">
+                                <img src="<%=schemeForSearchUrl%>://www.google.com/logos/Logo_40wht.gif" border="0" alt="Google" align="middle">
                             </a>
                             <%
                             if (useGoogleCse){
@@ -100,8 +108,8 @@
                         
                         %>
                         <!-- Yahoo! Search -->
-                        <form name="myform" method=get action="http://<%=searchUrl%>/search" style="padding: 5px; width:360px; text-align:center; margin-top: 15px; margin-bottom: 25px; margin-left: auto; margin-right: auto;">
-                            <a href="http://<%=searchUrl%>/"><img src="http://us.i1.yimg.com/us.yimg.com/i/us/search/ysan/ysanlogo.gif" alt="yahoo" align="absmiddle" border=0></a>
+                        <form name="myform" method=get action="<%=schemeForSearchUrl%>://<%=searchUrl%>/search" style="padding: 5px; width:360px; text-align:center; margin-top: 15px; margin-bottom: 25px; margin-left: auto; margin-right: auto;">
+                            <a href="<%=schemeForSearchUrl%>://<%=searchUrl%>/"><img src="<%=schemeForSearchUrl%>://us.i1.yimg.com/us.yimg.com/i/us/search/ysan/ysanlogo.gif" alt="yahoo" align="absmiddle" border=0></a>
                             <input type="text" name="p" size="25">&nbsp;
                             <input type="hidden" name="fr" value="yscpb">&nbsp;
                             <input type="submit" value="Search">
