@@ -123,7 +123,27 @@ if (userLogin.isSecure()) {
     //User is logged in and secure.
     //System.out.println("user session is already secure");
 }
-else if (state.equals("2") && fromstate.equals("1")){
+else if (username == null || userPage == null) {
+    //Username not provided as it should have been. Can't display editor.
+    state = "-1";
+    %>
+    <div class="main">
+        <jsp:include page="inc_ngumbi_title_childlevel_unlinked.jsp" />
+        <p>Cannot access editor - problem with user</p>
+        <p>Problem accessing editor - user was not provided. </p>
+        <p><a href="javascript:history.back();">Go back</a></p>
+        <p>or</p>
+        <p>Go to <a href="../index.jsp">ngumbi home</a></p>
+    </div>
+    <%
+}
+else if (state == null || fromstate == null) {
+    //User is not secure, and we're missing values for either state or fromstate. 
+    //Should not be here. URL for editor may have been used without logging in.
+    //Set state = 1 so we display login form.
+    state = "1";
+}
+else if (state.equals("2") && fromstate.equals("1")) {
     //User not secure, but just made login attempt. 
     //Process login attempt.
     
@@ -160,202 +180,238 @@ else {
 //EDITOR EXECUTION BLOCK
 //Following block checks for editor actions requested and ready to be executed,
 //and executes them.
-if (state.equals("1")){
-    //state 1 - 
-    //User clicked edit on their user page. Show login dialog.
-    
-    //CAN REMOVE THIS CONDITIONAL
-    
-}
-else if (state.equals("2")){
-    //state 2 - 
-    //Main edit screen showing edit options. 
-    //If coming from state 1, user has attempted login to get here.
-    //If coming from a state 3-something, user has attempted to make an update, 
-    //and we need to execute it.
-    
-    
-    //Ensure we are logged in before doing anything in state 2
-    if (userLogin.isSecure() && username.equals(userLogin.getUsername())){
-        //Logged in and secure, continue.
-        
-        
-        if (fromstate.equals("3a") || fromstate.equals("3a_1")){
-            //From State 3a, 3a_1
-            //Add a Link
-            
-            //Call UserPageDAO.addLink() to add it (does input check, checks for duplicate)
-            //addlink_linkname - user chosen display name for new link
-            //addlink_linkaddress - URL for new link
-            //addlink_cat_radio - user chosen existing category to add new link to 
-            //addlink_cat_userspecified - user entered new category to add new link to (adds category)
-            String addLinkResultMsg = UserPageDAO.addLink(userPage, addlink_linkname, addlink_linkaddress, addlink_cat_radio, addlink_cat_userspecified);
-            
-            if (!addLinkResultMsg.equals("")){
-                //Have an error message and didn't add the link
-                state = "3a_1";
-                errMsg = addLinkResultMsg;
-            }
-            else {
-                //No error. Update the UserPage for display.
-                userPage = UserPageDAO.getUserPage(username);
-                //Set userPage as a session attribute so the include files can use it
-                session.setAttribute("userPage", userPage);
-            }
-            
-        }
-        else if (fromstate.equals("3e_1") || fromstate.equals("3e_2")){
-            //From State 3e_1, 3e_2
-            //Edit a Link
-            
-            //Call UserPageDAO.editLink() to edit it (does input check, checks for duplicate)
-            //selected_user_link_id - the link the user selected for this action
-            //editlink_linkname - user chosen new display name for link
-            //editlink_linkaddress - new URL for link
-            String editLinkResultMsg = UserPageDAO.editLink(userPage, selected_user_link_id, editlink_linkname, editlink_linkaddress);
-            
-            if (!editLinkResultMsg.equals("")){
-                //Have an error message and didn't edit the link
-                state = "3e_2";
-                errMsg = editLinkResultMsg;
-            }
-            else {
-                //No error. Update the UserPage for display.
-                userPage = UserPageDAO.getUserPage(username);
-                //Set userPage as a session attribute so the include files can use it
-                session.setAttribute("userPage", userPage);
-            }
-            
-        }
-        else if (fromstate.equals("3d")){
-            //From State 3d
-            //Delete a Link
-            
-            //Call UserPageDAO.deleteLink() to delete it
-            //selected_user_link_id - the link the user selected for this action
-            String deleteLinkResultMsg = UserPageDAO.deleteLink(userPage, selected_user_link_id);
-            
-            if (!deleteLinkResultMsg.equals("")){
-                //Have an error message and didn't delete the link
-                state = "2";//already set
-                errMsg = deleteLinkResultMsg;
-            }
-            else {
-                //No error. Update the UserPage for display.
-                userPage = UserPageDAO.getUserPage(username);
-                //Set userPage as a session attribute so the include files can use it
-                session.setAttribute("userPage", userPage);
-            }
-            
-        }
-        else if (fromstate.equals("3r_1") || fromstate.equals("3r_2")){
-            //From State 3r_1, 3r_2
-            //Rename a Category
-            
-            //Call UserPageDAO.renameCategory() to rename it
-            String renameCategoryResultMsg = UserPageDAO.renameCategory(userPage, renamecat_old, renamecat_new);
-            
-            if (!renameCategoryResultMsg.equals("")){
-                //Have an error message and didn't rename the category
-                state = "3r_2";//Allows user to try again
-                errMsg = renameCategoryResultMsg;
-            }
-            else {
-                //No error. Update the UserPage for display.
-                userPage = UserPageDAO.getUserPage(username);
-                //Set userPage as a session attribute so the include files can use it
-                session.setAttribute("userPage", userPage);
-            }
-            
-        }
-        else if (fromstate.equals("3g") || fromstate.equals("3g_0") || fromstate.equals("3g_10")){
-            //From State 3g, Change Search option
-            
-        }
-        else if (fromstate.equals("3p") || fromstate.equals("3p_1")){
-            //From State 3p or 3p_1, Change password option
-            
-        }
-        else if (fromstate.equals("3dj")){
-            //delete all user data
-            //From State 3dj, Delete Jumpstation
-        }
-        
-        
-        
-        
+if (state != null) {
+    if (state.equals("1")){
+        //state 1 - 
+        //User clicked edit on their user page. Show login dialog.
+
+        //CAN REMOVE THIS CONDITIONAL
+
     }
-    else {
-        //In state 2, but not secure! Do nothing.
+    else if (state.equals("2")){
+        //state 2 - 
+        //Main edit screen showing edit options. 
+        //If coming from state 1, user has attempted login to get here.
+        //If coming from a state 3-something, user has attempted to make an update, 
+        //and we need to execute it.
+
+
+        //Ensure we are logged in before doing anything in state 2
+        if (userLogin.isSecure() && username.equals(userLogin.getUsername())){
+            //Logged in and secure, continue.
+
+
+            if (fromstate.equals("3a") || fromstate.equals("3a_1")){
+                //From State 3a, 3a_1
+                //Add a Link
+
+                //Call UserPageDAO.addLink() to add it (does input check, checks for duplicate)
+                //addlink_linkname - user chosen display name for new link
+                //addlink_linkaddress - URL for new link
+                //addlink_cat_radio - user chosen existing category to add new link to 
+                //addlink_cat_userspecified - user entered new category to add new link to (adds category)
+                String addLinkResultMsg = UserPageDAO.addLink(userPage, addlink_linkname, addlink_linkaddress, addlink_cat_radio, addlink_cat_userspecified);
+
+                if (!addLinkResultMsg.equals("")){
+                    //Have an error message and didn't add the link
+                    state = "3a_1";
+                    errMsg = addLinkResultMsg;
+                }
+                else {
+                    //No error. Update the UserPage for display.
+                    userPage = UserPageDAO.getUserPage(username);
+                    //Set userPage as a session attribute so the include files can use it
+                    session.setAttribute("userPage", userPage);
+                }
+
+            }
+            else if (fromstate.equals("3e_1") || fromstate.equals("3e_2")){
+                //From State 3e_1, 3e_2
+                //Edit a Link
+
+                //Call UserPageDAO.editLink() to edit it (does input check, checks for duplicate)
+                //selected_user_link_id - the link the user selected for this action
+                //editlink_linkname - user chosen new display name for link
+                //editlink_linkaddress - new URL for link
+                String editLinkResultMsg = UserPageDAO.editLink(userPage, selected_user_link_id, editlink_linkname, editlink_linkaddress);
+
+                if (!editLinkResultMsg.equals("")){
+                    //Have an error message and didn't edit the link
+                    state = "3e_2";//Stay at status 3e_2 to allow user to try again
+                    errMsg = editLinkResultMsg;
+                }
+                else {
+                    //No error. Update the UserPage for display.
+                    userPage = UserPageDAO.getUserPage(username);
+                    //Set userPage as a session attribute so the include files can use it
+                    session.setAttribute("userPage", userPage);
+                }
+
+            }
+            else if (fromstate.equals("3d")){
+                //From State 3d
+                //Delete a Link
+
+                //Call UserPageDAO.deleteLink() to delete it
+                //selected_user_link_id - the link the user selected for this action
+                String deleteLinkResultMsg = UserPageDAO.deleteLink(userPage, selected_user_link_id);
+
+                if (!deleteLinkResultMsg.equals("")){
+                    //Have an error message and didn't delete the link
+                    state = "2";//Go back to main edit menu
+                    errMsg = deleteLinkResultMsg;
+                }
+                else {
+                    //No error. Update the UserPage for display.
+                    userPage = UserPageDAO.getUserPage(username);
+                    //Set userPage as a session attribute so the include files can use it
+                    session.setAttribute("userPage", userPage);
+                }
+
+            }
+            else if (fromstate.equals("3r_1") || fromstate.equals("3r_2")){
+                //From State 3r_1, 3r_2
+                //Rename a Category
+
+                //Call UserPageDAO.renameCategory() to rename it
+                String renameCategoryResultMsg = UserPageDAO.renameCategory(userPage, renamecat_old, renamecat_new);
+
+                if (!renameCategoryResultMsg.equals("")){
+                    //Have an error message and didn't rename the category
+                    state = "3r_2";//Stay at status 3r_2 to allow user to try again
+                    errMsg = renameCategoryResultMsg;
+                }
+                else {
+                    //No error. Update the UserPage for display.
+                    userPage = UserPageDAO.getUserPage(username);
+                    //Set userPage as a session attribute so the include files can use it
+                    session.setAttribute("userPage", userPage);
+                }
+
+            }
+            else if (fromstate.equals("3g") || fromstate.equals("3g_0") || fromstate.equals("3g_10")){
+                //From State 3g, Change Search option
+
+                int tempSearchInt = Integer.parseInt(searchradio); //get the search code as an int
+                if (fromstate.equals("3g") && tempSearchInt >= 0 && tempSearchInt <= 9 ){
+                    //have a google search so need to go to the next page of options, no operations yet
+                    state = "3g_0";
+                }
+                else if (fromstate.equals("3g") && tempSearchInt >= 10 && tempSearchInt <= 19 ){
+                    //have a yahoo search so need to go to the next page of options, no operations yet
+                    state = "3g_10";
+                }
+                else {
+                    //Update the search-related variables based on input. If not using a google choice, 
+                    //then the searchLang, searchUrl, customSearchUrl vars are just passed as they were before.
+
+                    //Get the searchUrl. If a customSearchUrl was passed, use that, otherwise use the dropdown value chosen in searchUrl
+                    String newSearchUrl = searchUrl;
+                    if (!customSearchUrl.equals("")) {
+                        newSearchUrl = customSearchUrl;
+                    }
+
+                    //Call UserPageDAO.editSearchOption() to change search option
+                    String editSearchOptionResultMsg = UserPageDAO.editSearchOption(userPage, searchradio, newSearchUrl, searchLang);
+
+                    if (!editSearchOptionResultMsg.equals("")){
+                        //Have an error message and didn't rename the category
+                        state = "3g";//Stay at status 3g to allow user to try again
+                        errMsg = editSearchOptionResultMsg;
+                    }
+                    else {
+                        //No error. Update the UserPage for display.
+                        userPage = UserPageDAO.getUserPage(username);
+                        //Set userPage as a session attribute so the include files can use it
+                        session.setAttribute("userPage", userPage);
+                    }
+                }
+
+            }
+            else if (fromstate.equals("3p") || fromstate.equals("3p_1")){
+                //From State 3p or 3p_1, Change password option
+
+            }
+            else if (fromstate.equals("3dj")){
+                //delete all user data
+                //From State 3dj, "Delete Jumpstation"
+            }
+
+
+
+
+        }
+        else {
+            //In state 2, but not secure! Do nothing.
+        }
+
+
+
+
+
     }
-    
-    
-    
-    
-    
-}
-else if (state.equals("3a")){
-    //state 3a - 
-    //they chose Add a link option.  Has form for user to enter linkname, link url, category,
-    //and row option.  Existing categories are shown among the choices, also the default "no category"
-    //and user can input new category.  The row option determines which row the link will go into in that category,
-    //the default is add the new link to very end category. The other row options are to add link to a new row
-    //and add to a specific row (which requires another step). They do not enter linkrank, if they want to
-    //add a link in between other links they will have to use the Move a link.
-    
-}
-else if (state.equals("3e")){
-    //state 3e - 
-    //they chose Edit a link.  This state has plain text in
-    //the yellow column saying to click the link they want to edit on the left.  The normal jumpstation
-    //links are now links that will tell the editor which one they chose in the next state.
-    
-}
-else if (state.equals("3e_1")){
-    //state 3e_1 - 
-    //they chose Edit a link, and they clicked on the link they want to edit.  Now in the yellow
-    //column, show textfields of data about the link.  It will have the link name and link url.  They can
-    //edit those and click save, which will pass the state and the linkname and url to state 2 where it will
-    //execute SQL to update that link and then show normal state 2 with the changes.
+    else if (state.equals("3a")){
+        //state 3a - 
+        //they chose Add a link option.  Has form for user to enter linkname, link url, category,
+        //and row option.  Existing categories are shown among the choices, also the default "no category"
+        //and user can input new category.  The row option determines which row the link will go into in that category,
+        //the default is add the new link to very end category. The other row options are to add link to a new row
+        //and add to a specific row (which requires another step). They do not enter linkrank, if they want to
+        //add a link in between other links they will have to use the Move a link.
 
-}
-else if (state.equals("3m")){
-    //state 3m - 
-    //they chose Move a link, this will have text in yellow saying to choose link they want to move.
-    //They'll click a link in jumpstation area and the link will pass the state and link info
-    
-}
-else if (state.equals("3m_1")){
-    //state 3m_1 - they chose link they wanted to move, will display jumpstation again but with markers before and
-    //after every link, the markers are links between others so they can pick where exactly to put the original
-    //link.  Also, this jumpstation must not include the link in question.  They click a marker and go back to state 2
-    //passing the state, the link to move, and location to move it to.  State 2 will show regular jumpstation again
-    //with the link moved.
+    }
+    else if (state.equals("3e")){
+        //state 3e - 
+        //they chose Edit a link.  This state has plain text in
+        //the yellow column saying to click the link they want to edit on the left.  The normal jumpstation
+        //links are now links that will tell the editor which one they chose in the next state.
 
-}
-else if (state.equals("3d")){
-    //state 3d - they chose Delete a link.  After this is chosen, yellow will have text saying to click the
-    //link they want to delete.  Each link will pass the state 3d so state 2 knows to delete this link.
+    }
+    else if (state.equals("3e_1")){
+        //state 3e_1 - 
+        //they chose Edit a link, and they clicked on the link they want to edit.  Now in the yellow
+        //column, show textfields of data about the link.  It will have the link name and link url.  They can
+        //edit those and click save, which will pass the state and the linkname and url to state 2 where it will
+        //execute SQL to update that link and then show normal state 2 with the changes.
 
-}
-else if (state.equals("3mc")){
-    //state 3mc - 
-    //they chose Move a category
+    }
+    else if (state.equals("3m")){
+        //state 3m - 
+        //they chose Move a link, this will have text in yellow saying to choose link they want to move.
+        //They'll click a link in jumpstation area and the link will pass the state and link info
 
-}
-else if (state.equals("3r")){
-    //state 3r - 
-    //they chose Rename a category
+    }
+    else if (state.equals("3m_1")){
+        //state 3m_1 - they chose link they wanted to move, will display jumpstation again but with markers before and
+        //after every link, the markers are links between others so they can pick where exactly to put the original
+        //link.  Also, this jumpstation must not include the link in question.  They click a marker and go back to state 2
+        //passing the state, the link to move, and location to move it to.  State 2 will show regular jumpstation again
+        //with the link moved.
+
+    }
+    else if (state.equals("3d")){
+        //state 3d - they chose Delete a link.  After this is chosen, yellow will have text saying to click the
+        //link they want to delete.  Each link will pass the state 3d so state 2 knows to delete this link.
+
+    }
+    else if (state.equals("3mc")){
+        //state 3mc - 
+        //they chose Move a category
+
+    }
+    else if (state.equals("3r")){
+        //state 3r - 
+        //they chose Rename a category
 
 
-}
-else if (state.equals("3dj")){
-    //state 3dj
-    //They chose to delete their userpage & account. This will delete their 
-    //user data from users table and delete their table, then drop them at index.jsp.
-    
-}
+    }
+    else if (state.equals("3dj")){
+        //state 3dj
+        //They chose to delete their userpage & account. This will delete their 
+        //user data from users table and delete their table, then drop them at index.jsp.
 
+    }
+}
 
 //Set fromstate as current state for next action (goes into forms as hidden input)
 fromstate = state;
@@ -843,6 +899,343 @@ body {
         }
         
         
+        //State 3g, display search options form 
+        else if (state.equals("3g")){
+            
+            //Check if we had an error. If so, it would be from a failed attempt to change the search option, 
+            //and we want to add an extra message.
+            String searchOptEditErrMsg = "";
+            if (!errMsg.equals("")) {
+                searchOptEditErrMsg = ""
+                        + "<p style=\"color: red;\">"
+                        + "The change was unsuccessful. "
+                        + errMsg 
+                        + "</p>";
+            }
+            
+            //Check user's current search option to use as default and build message.
+            String currSearchOptMsg = "";
+            String checked0 = "";
+            String checked1 = "";
+            String checked2 = "";
+            String checked3 = "";
+            String checked10 = "";
+            if (userPage.getSearchOption() == 0){
+                currSearchOptMsg = "Your current selection is for <span style=\"color: blue;\">no search</span>";
+                checked0 = "checked";
+            }
+            else if (userPage.getSearchOption() == 1){
+                currSearchOptMsg = "Your current selection is for a <span style=\"color: blue\">Google search (Ngumbi branded)</span> "+
+                            "at <span style=\"color: blue\">"+userPage.getSearchUrl()+"</span>";
+                checked1 = "checked";
+            }
+            else if (userPage.getSearchOption() == 2){
+                currSearchOptMsg = "Your current selection is for a <span style=\"color: blue\">regular Google search</span> "+
+                            "at <span style=\"color: blue\">"+userPage.getSearchUrl()+"</span>";
+                checked2 = "checked";
+            }
+            else if (userPage.getSearchOption() == 3){
+                currSearchOptMsg = "Your current selection is for a <span style=\"color: blue\">Google SafeSearch (Ngumbi branded)</span> "+
+                            "at <span style=\"color: blue\">"+userPage.getSearchUrl()+"</span>";
+                checked3 = "checked";
+            }
+            else if (userPage.getSearchOption() == 10){
+                currSearchOptMsg = "Your current selection is for a <span style=\"color: blue\">Google SafeSearch (Ngumbi branded)</span> "+
+                            "at <span style=\"color: blue\">"+userPage.getSearchUrl()+"</span>";
+                checked10 = "checked";
+            }
+            
+            %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
+                <tr>
+                    <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_links.jsp" >
+                            <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
+                            <jsp:param name="editorCurrState" value="<%=state%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
+                    </td>
+                    <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+                        
+                        <%=searchOptEditErrMsg%>
+            
+                        <%=currSearchOptMsg%>
+                        
+                        <form name="editg" method="post" action="editor_NEW.jsp">
+                            <p>
+                                Choose new search option:
+                            </p>
+                            
+                            <div>
+                                <label id="searchradio0">
+                                    <input type="radio" name="searchradio" value="0" id="searchradio0" <%=checked0%> >No search
+                                </label>
+                                <!--
+                                <br>
+                                <label id="searchradio1">
+                                    <input type="radio" name="searchradio" value="1" <%=checked1%> >Google search<span style="font-size: .7em">(n)</span>
+                                </label>
+                                -->
+                                <br>
+                                <label id="searchradio0">
+                                <input type="radio" name="searchradio" value="2" <%=checked2%> >Google search
+                                </label>
+                                <!--
+                                <br>
+                                <label id="searchradio0">
+                                <input type="radio" name="searchradio" value="3" <%=checked3%> >Google SafeSearch<span style="font-size: .7em">(n)</span>
+                                </label>
+                                -->
+                                <br>
+                                <label id="searchradio0">
+                                <input type="radio" name="searchradio" value="10" <%=checked10%> >Yahoo! search
+                                </label>
+
+                                <input type="hidden" name="user" value="<%=username%>" >
+                                <input type="hidden" name="state" value="2" >
+                                <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+                            </div>
+
+                            <div style="padding: 15px 0px; text-align: center;">
+                                <input type="submit" value="Submit">
+                            </div>
+                        </form>
+
+                        <p style="text-align: center; padding: 20px 0px;">
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                        </p>
+                        
+                    </td>
+                </tr>
+            </table>
+            <%
+            
+        }
+        
+        
+        //State 3g, display 2nd page of search options (Google)
+        else if (state.equals("3g_0")){
+            
+            %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
+                <tr>
+                    <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_links.jsp" >
+                            <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
+                            <jsp:param name="editorCurrState" value="<%=state%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
+                    </td>
+                    <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+                        
+                        <form name="editg0" method="post" action="editor_NEW.jsp">
+
+                            <div style="padding: 15px 0px;">
+                                Google URL: <br>
+                                <select name="searchUrl" style="width: 200px;">
+                                    <%
+                                    if (userPage.getSearchUrl().indexOf("google.com") > -1){
+                                        //User's current (previous) search choice is a Google one, so get the searchUrl for that one, put it first and pre-select it.
+                                        %>
+                                        <option value="<%=userPage.getSearchUrl()%>" selected ><%=userPage.getSearchUrl()%></option>
+                                        <optgroup label="-----------------"></optgroup>
+                                        <%
+                                    }
+                                    %>
+                                    <option value="www.google.com" >Default - www.google.com</option>
+                                    <option value="www.google.com.au">Australia - www.google.com.au</option><!-- Australia -->
+                                    <option value="www.google.be">België - www.google.be</option><!-- Belgium -->
+                                    <option value="www.google.com.br">Brasil - www.google.com.br</option><!-- Brazil -->
+                                    <option value="www.google.ca">Canada - www.google.ca</option><!-- Canada -->
+                                    <option value="www.google.cn">中国 - www.google.cn</option><!-- China -->
+                                    <option value="www.google.com.hk">香港 - www.google.com.hk</option><!-- China, Hong Kong (not censored) -->
+                                    <option value="www.google.com.tw">台灣 - www.google.com.tw</option><!-- Taiwan -->
+                                    <option value="www.google.dk">Danmark - www.google.dk</option><!-- Denmark -->
+                                    <option value="www.google.de">Deutschland - www.google.de</option><!-- Germany -->
+                                    <option value="www.google.fr">France - www.google.fr</option><!-- France -->
+                                    <option value="www.google.gr">Ελλάς - www.google.gr</option><!-- Greece -->
+                                    <option value="www.google.es">España - www.google.es</option><!-- Spain -->
+                                    <option value="www.google.ie">Ireland - www.google.ie</option><!-- Ireland -->
+                                    <option value="www.google.co.id">Indonesia - www.google.co.id</option><!-- Indonesia -->
+                                    <option value="www.google.co.in">India - www.google.co.in</option><!-- India -->
+                                    <option value="www.google.it">Italia - www.google.it</option><!-- Italy -->
+                                    <option value="www.google.co.kr">한국 - www.google.co.kr</option><!-- Korea (South) -->
+                                    <option value="www.google.lv">Latvija - www.google.lv</option><!-- Latvia -->
+                                    <option value="www.google.com.mx">México - www.google.com.mx</option><!-- Mexico -->
+                                    <option value="www.google.nl">Nederland - www.google.nl</option><!-- Netherlands -->
+                                    <option value="www.google.co.nz">New Zealand - www.google.co.nz</option><!-- New Zealand -->
+                                    <option value="www.google.com.pk">Pakistan - www.google.com.pk</option><!-- Pakistan -->
+                                    <option value="www.google.com.ph">Pilipinas - www.google.com.ph</option><!-- Philippines -->
+                                    <option value="www.google.ru">Россия - www.google.ru</option><!-- Russia -->
+                                    <option value="www.google.fi">Suomi - www.google.fi</option><!-- Finland -->
+                                    <option value="www.google.se">Sverige - www.google.se</option><!-- Sweden -->
+                                    <option value="www.google.com.tr">Türkiye - www.google.com.tr</option><!-- Turkey -->
+                                    <option value="www.google.co.uk">UK - www.google.co.uk</option><!-- UK -->
+                                    <option value="www.google.com">USA - www.google.com</option><!-- USA -->
+                                </select>
+                                <br><br>
+                                or
+                                <input type="text" name="customSearchUrl" size="20" maxlength="45" value="">
+                            </div>
+
+                            <div style="padding: 15px 0px;">
+                                Language
+                                <select name="searchLang">
+                                    <%
+                                    String english_selected = "selected";
+                                    if (userPage.getSearchUrl().indexOf("google") > -1){
+                                        //previously had yahoo choice, put first and preselect it
+                                        %>
+                                        <option value="<%=userPage.getSearchLang()%>" selected ><%=userPage.getSearchLang()%></option>
+                                        <optgroup label="-----------------"></optgroup>
+                                        <%
+                                        english_selected = "";//preselect english if there was no language, such as if user had yahoo or no search previously
+                                    }
+                                    %>
+                                    <option value="ar">العربية</option><!-- Arabic -->
+                                    <option value="da">dansk</option><!-- Danish -->
+                                    <option value="de">Deutsch</option><!-- German -->
+                                    <option value="el">Ελληνικά</option><!-- Greek -->
+                                    <option value="en" <%=english_selected%> >English</option><!-- English -->
+                                    <option value="es">español</option><!-- Spanish -->
+                                    <option value="tl">Filipino</option><!-- Filipino -->
+                                    <option value="fr">Français</option><!-- French -->
+                                    <option value="iw">עברית</option><!-- Hebrew -->
+                                    <option value="hi">हिंदी</option><!-- Hindi -->
+                                    <option value="lv">Latviešu</option><!-- Latvian -->
+                                    <option value="nl">Nederlands</option><!-- Dutch -->
+                                    <option value="ja">日本語</option><!-- Japanese -->
+                                    <option value="pt-BR">Português (Br)</option><!-- Portuguese (Brazil) -->
+                                    <option value="pt-PT">Português (Pt)</option><!-- Portuguese (Portugal) -->
+                                    <option value="ru">Россию</option><!-- Russian -->
+                                    <option value="fi">suomi</option><!-- Finnish -->
+                                    <option value="sv">Svenska</option><!-- Swedish -->
+                                    <option value="th">ภาษาไทย</option><!-- Thai -->
+                                    <option value="tr">Türk</option><!-- Turkish -->
+                                    <option value="ur">اردو</option><!-- Urdu (for Pakistan) -->
+                                    <option value="zh-CN">简体中文</option><!-- Chinese (simplified) -->
+                                    <option value="zh-TW">繁體中文</option><!-- Chinese (traditional) -->
+                                    <option value="xx-piglatin">Pig Latin</option><!-- Pig Latin -->
+                                </select>
+                            </div>
+
+                            <input type="hidden" name="user" value="<%=username%>" >
+                            <input type="hidden" name="state" value="2" >
+                            <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+                            <input type="hidden" name="searchradio" value="<%=searchradio%>" >
+
+                            <div style="padding: 15px 0px; text-align: center;">
+                                <input type="submit" value="Submit">
+                            </div>
+                            
+                        </form>
+                        
+                        <div style="text-align: center; ">
+                           <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                        </div>
+                        
+                    </td>
+                </tr>
+            </table>
+            <%
+            
+        }
+        
+        
+        //State 3g, display 2nd page of search options (Yahoo)
+        else if (state.equals("3g_10")){
+            
+            %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
+                <tr>
+                    <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_links.jsp" >
+                            <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
+                            <jsp:param name="editorCurrState" value="<%=state%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
+                    </td>
+                    <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+                        
+                        <form name="editg10" method="post" action="editor_NEW.jsp">
+
+                            <div style="padding: 15px 0px;">
+                                Yahoo! URL: <br>
+                                <select name="searchUrl" style="width: 200px;">
+                                    <%
+                                    if (userPage.getSearchUrl().indexOf("yahoo.com") > -1){
+                                        //User's current (previous) search choice is a Yhaoo one, so get the searchUrl for that one, put it first and pre-select it.
+                                        %>
+                                        <option value="<%=userPage.getSearchUrl()%>" selected ><%=userPage.getSearchUrl()%></option>
+                                        <optgroup label="-----------------"></optgroup>
+                                        <%
+                                    }
+                                    %>
+                                    <option value="search.yahoo.com" >Default - search.yahoo.com</option>
+                                    <option value="au.search.yahoo.com">Australia - au.search.yahoo.com</option><!-- Australia -->
+                                    <option value="br.search.yahoo.com">Brasil - br.search.yahoo.com</option><!-- Brazil -->
+                                    <option value="ca.search.yahoo.com">Canada - ca.search.yahoo.com</option><!-- Canada -->
+                                    <option value="dk.search.yahoo.com">Danmark - dk.search.yahoo.com</option><!-- Denmark -->
+                                    <option value="de.search.yahoo.com">Deutschland - de.search.yahoo.com</option><!-- Germany -->
+                                    <option value="gr.search.yahoo.com">Ελλάς - gr.search.yahoo.com</option><!-- Greece -->
+                                    <option value="es.search.yahoo.com">España - es.search.yahoo.com</option><!-- Spain -->
+                                    <option value="fr.search.yahoo.com">France - fr.search.yahoo.com</option><!-- France -->
+                                    <option value="one.cn.yahoo.com">中国 - one.cn.yahoo.com</option><!-- China -->
+                                    <option value="hk.search.yahoo.com">香港 - hk.search.yahoo.com</option><!-- China -->
+                                    <option value="tw.search.yahoo.com">中華民國 - tw.search.yahoo.com</option><!-- China (Taiwan) -->
+                                    <option value="in.search.yahoo.com">India - in.search.yahoo.com</option><!-- India -->
+                                    <option value="id.search.yahoo.com">Indonesia - id.search.yahoo.com</option><!-- Indonesia -->
+                                    <option value="it.search.yahoo.com">Italia - it.search.yahoo.com</option><!-- Italy -->
+                                    <option value="kr.search.yahoo.com">한국 - kr.search.yahoo.com</option><!-- Korea (South) -->
+                                    <option value="mx.search.yahoo.com">México - mx.search.yahoo.com</option><!-- Mexico -->
+                                    <option value="nl.search.yahoo.com">Nederland - nl.search.yahoo.com</option><!-- Netherlands -->
+                                    <option value="nz.search.yahoo.com">New Zealand - nz.search.yahoo.com</option><!-- New Zealand -->
+                                    <option value="ph.search.yahoo.com">Pilipinas - ph.search.yahoo.com</option><!-- Philippines -->
+                                    <option value="ru.search.yahoo.com">Россия - ru.search.yahoo.com</option><!-- Russia -->
+                                    <option value="ch.search.yahoo.com">Schweiz - ch.search.yahoo.com</option><!-- Switzerland (Confederation of Helvetia) -->
+                                    <option value="fi.search.yahoo.com">Suomi - fi.search.yahoo.com</option><!-- Finland -->
+                                    <option value="sv.search.yahoo.com">Sverige - sv.search.yahoo.com</option><!-- Sweden -->
+                                    <option value="th.search.yahoo.com">ประเทศไทย - th.search.yahoo.com</option><!-- Thailand -->
+                                    <option value="tr.search.yahoo.com">Türkiye - tr.search.yahoo.com</option><!-- Turkey -->
+                                    <option value="uk.search.yahoo.com">UK & Ireland - uk.search.yahoo.com</option><!-- United Kingdom -->
+                                    <option value="us.search.yahoo.com">USA - us.search.yahoo.com</option><!-- Canada -->
+                                    <option value="asia.search.yahoo.com">Asia - asia.search.yahoo.com</option><!-- Asia -->
+                                </select>
+                                <br><br>
+                                or
+                                <input type="text" name="customSearchUrl" size="20" maxlength="45" value="">
+                                <input type="hidden" name="searchLang" value="">
+                            </div>
+                            
+                            <input type="hidden" name="user" value="<%=username%>" >
+                            <input type="hidden" name="state" value="2" >
+                            <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+                            <input type="hidden" name="searchradio" value="<%=searchradio%>" >
+
+                            <div style="padding: 15px 0px; text-align: center;">
+                                <input type="submit" value="Submit">
+                            </div>
+                            
+                        </form>
+                        
+                        <div style="text-align: center; ">
+                           <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                        </div>
+                        
+                    </td>
+                </tr>
+            </table>
+            <%
+        }
         
     }
 
@@ -943,7 +1336,8 @@ catch (Exception e) {
 }
 		
 //check if username exists
-if (!rsuser.next()){ //username doesn't exist
+if (!rsuser.next()){
+    //username doesn't exist
     %>
     <div class="main">
         <jsp:include page="inc_ngumbi_title_unlinked.jsp" />
@@ -1559,7 +1953,7 @@ else {
 
                         //From State 3g, Change Search option
                         else if (fromstate.equals("3g") || fromstate.equals("3g_0") || fromstate.equals("3g_10")){
-
+                            
                             int tempSearchInt = Integer.parseInt(searchradio); //get the search code as an int
                             if (fromstate.equals("3g")	&& tempSearchInt > 0 && tempSearchInt < 10 ){
                                 //have a google search so need to go to the next page of options, no operations yet
@@ -2590,7 +2984,7 @@ else {
                     checked3 = "checked";
                 }
                 else if (searchFlag == 10){
-                    currSelectionMsg = "Your current selection is for a <span style=\"color: blue\">Google SafeSearch (Ngumbi branded)</span> "+
+                    currSelectionMsg = "Your current selection is for a <span style=\"color: blue\">Yahoo! search</span> "+
                                 "at <span style=\"color: blue\">"+searchUrl+"</span>";
                     checked10 = "checked";
                 }
