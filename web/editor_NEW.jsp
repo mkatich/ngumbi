@@ -63,7 +63,7 @@ request.setCharacterEncoding("UTF-8");
 //get the passed params, if not logged in yet, will only have user & state
 String username = request.getParameter("user");
 String pass = request.getParameter("pass");
-String cpass = request.getParameter("cpass");
+String cpass = request.getParameter("cpass");//CAN DELETE LATER SINCE THIS IS ONLY USED IN OLDER VERSION OF CHANGE PASSWORD
 String state = request.getParameter("state");
 String fromstate = request.getParameter("fromstate");
 
@@ -77,6 +77,8 @@ String editlink_linkname = request.getParameter("editlink_linkname");
 String editlink_linkaddress = request.getParameter("editlink_linkaddress");
 String renamecat_old = request.getParameter("renamecat_old");
 String renamecat_new = request.getParameter("renamecat_new");
+String changepass_newpass1 = request.getParameter("changepass_newpass1");
+String changepass_newpass2 = request.getParameter("changepass_newpass2");
 
 
 //get additional params used for editing purposes
@@ -164,7 +166,7 @@ else if (state.equals("2") && fromstate.equals("1")) {
     }
     else {
         //Bad login
-        
+        errMsg = "Incorrect login.";
         //System.out.println("bad login");
     }
     
@@ -223,7 +225,7 @@ if (state != null) {
                     //Set userPage as a session attribute so the include files can use it
                     session.setAttribute("userPage", userPage);
                 }
-
+                
             }
             else if (fromstate.equals("3e_1") || fromstate.equals("3e_2")){
                 //From State 3e_1, 3e_2
@@ -234,7 +236,7 @@ if (state != null) {
                 //editlink_linkname - user chosen new display name for link
                 //editlink_linkaddress - new URL for link
                 String editLinkResultMsg = UserPageDAO.editLink(userPage, selected_user_link_id, editlink_linkname, editlink_linkaddress);
-
+                
                 if (!editLinkResultMsg.equals("")){
                     //Have an error message and didn't edit the link
                     state = "3e_2";//Stay at status 3e_2 to allow user to try again
@@ -329,8 +331,25 @@ if (state != null) {
 
             }
             else if (fromstate.equals("3p") || fromstate.equals("3p_1")){
-                //From State 3p or 3p_1, Change password option
+                //From State 3p or 3p_1
+                //Change password option
+                
+                //Call UserPageDAO.changePassword() to change it
+                //selected_user_link_id - the link the user selected for this action
+                String passwordChangeResultMsg = UserPageDAO.changePassword(userPage, changepass_newpass1, changepass_newpass2);
 
+                if (!passwordChangeResultMsg.equals("")){
+                    //Have an error message and didn't change the password
+                    state = "3p_1";//Stay on change password form
+                    errMsg = passwordChangeResultMsg;
+                }
+                else {
+                    //No error. Update the UserPage for display.
+                    userPage = UserPageDAO.getUserPage(username);
+                    //Set userPage as a session attribute so the include files can use it
+                    session.setAttribute("userPage", userPage);
+                }
+                
             }
             else if (fromstate.equals("3dj")){
                 //delete all user data
@@ -478,9 +497,18 @@ body {
     
     
     //State 1, display login form with password input
-    if (state.equals("1")){
+    if (state.equals("1") || (state.equals("2") && !userLogin.isSecure())){
+        //First time to login form from Edit link, OR attempted login and failed
         
-        //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
+        //Leave linkDisplayMode = "1", so user links look like links but aren't clickable (used in most cases for editor, except for picking a link to edit or delete)
+        
+        String loginErrMsgHtml = "";
+        if (!errMsg.equals("")){
+            loginErrMsgHtml = "<span style=\"color: red;\">"+errMsg+"</span>";
+        }
+        
+        //change fromstate to 1 in case user came from state 2 failed login, otherwise login won't be tried
+        fromstate = "1";
         
         %>
         <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
@@ -495,6 +523,9 @@ body {
                     <jsp:include page="user_page_include_bottom.jsp" />
                 </td>
                 <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+                    
+                    <%=loginErrMsgHtml%>
+                    
                     <form name="edit_login" method="post" action="editor_NEW.jsp">
                         <p style="text-align: left; padding: 0px 7px;">
                             Username: <b><%=username%></b>
@@ -523,12 +554,13 @@ body {
 
     }
     else if (userLogin.isSecure() && username.equals(userLogin.getUsername())){
-        //Uer is logged in. ok to display interior menu options
+        //User is logged in, and attempting to display Editor for the secure user's name
+        //Ok to display interior menu options
 
         //State 2, display main edit options
         if (state.equals("2")){
             
-            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
+            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable (used in most cases for editor, except for picking a link to edit or delete)
             
             %>
             <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
@@ -564,7 +596,7 @@ body {
         //State 3o, display 'more options', non-basic options
         else if (state.equals("3o")){
             
-            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
+            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable (used in most cases for editor, except for picking a link to edit or delete)
             
             %>
             <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
@@ -598,8 +630,8 @@ body {
         
         //State 3a, display add a link dialog and form
         else if (state.equals("3a") || state.equals("3a_1")){
-
-            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
+            
+            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable (used in most cases for editor, except for picking a link to edit or delete)
             
             String default_addlink_linkname = "";
             String default_addlink_linkaddress = "";
@@ -707,7 +739,7 @@ body {
         //and if 3e_2, also display error message
         else if (state.equals("3e_1") || state.equals("3e_2")){
 
-            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
+            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable (used in most cases for editor, except for picking a link to edit or delete)
             
             //Get info for selected link so we can prefill values into input fields
             UserLink selectedUserLink = UserPageDAO.getUserLink(selected_user_link_id);
@@ -843,7 +875,7 @@ body {
         //and if 3r_2, also display error message
         else if (state.equals("3r_1") || state.equals("3r_2")){
             
-            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable
+            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable (used in most cases for editor, except for picking a link to edit or delete)
             
             //Add extra message if we are in state 3e_2, which means we had an unsuccessful edit.
             String categoryRenameErrMsg = "";
@@ -1235,7 +1267,80 @@ body {
                 </tr>
             </table>
             <%
+            
         }
+
+        //state 3p, display form to change password
+        else if (state.equals("3p") || state.equals("3p_1")){
+            
+            //similar to 3e_1, need to do check if new password entered is invalid
+            //if (state.equals("3p_1")){
+                //had unsuccessful attempt for editing category name
+            //    ||><font color=red>The password change was unsuccessful because 
+            //    either the two fields didn't match or you attempted to use invalid characters.  
+            //    Spaces are invalid.  Try sticking to letters and numbers.  Try again.</font><||
+            //}
+            
+            //Leave linkDisplayMode = "1", so user links look like links but aren't clickable (used in most cases for editor, except for picking a link to edit or delete)
+            
+            String default_addlink_linkname = "";
+            String default_addlink_linkaddress = "";
+            String passwordChangeErrMsgHtml = "";
+            if (state.equals("3p_1")){
+                default_addlink_linkname = addlink_linkname;
+                default_addlink_linkaddress = addlink_linkaddress;
+                if (!errMsg.equals("")){
+                    passwordChangeErrMsgHtml = "<span style=\"color: red;\">"+errMsg+"</span>";
+                }
+            }
+            
+            %>
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height: 100%;">
+                <tr>
+                    <td valign="top">
+                        <jsp:include page="user_page_include_top.jsp" >
+                            <jsp:param name="topDisplayMode" value="<%=topDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_links.jsp" >
+                            <jsp:param name="linkDisplayMode" value="<%=linkDisplayMode%>" />
+                        </jsp:include>
+                        <jsp:include page="user_page_include_bottom.jsp" />
+                    </td>
+                    <td style="width: 220px; background-color: #ffc; padding: 20px 20px; vertical-align: middle;">
+                        
+                        <p>Please enter your new password twice.</p>
+                        
+                        <%=passwordChangeErrMsgHtml%>
+                        
+                        <form name="editp" method="post" action="editor_NEW.jsp" enctype="application/x-www-form-urlencoded">
+                            <input type="password" name="changepass_newpass1" size="20" maxlength="30" value="">
+                            <br>
+                            <input type="password" name="changepass_newpass2" size="20" maxlength="30" value="">
+                            
+                            <input type="hidden" name="user" value="<%=username%>" >
+                            <input type="hidden" name="state" value="2" >
+                            <input type="hidden" name="fromstate" value="<%=fromstate%>" >
+                            <div style="text-align: center; margin-top: 20px;">
+                                <input type="submit" value="Submit">
+                            </div>
+                        </form>
+                        
+                        <!--set focus in javascript-->
+                        <script type="text/javascript"><!--
+                            document.editp.changepass_newpass1.focus();
+                        //--></script>
+                        
+                        <p style="text-align: center; padding: 30px 7px;">
+                            <a href="editor_NEW.jsp?user=<%=username%>&state=2&fromstate=0">Cancel</a>
+                        </p>
+                        
+                    </td>
+                </tr>
+            </table>
+            <%
+            
+        }
+        
         
     }
 
